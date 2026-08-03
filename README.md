@@ -1,11 +1,13 @@
 # AI Trading Brain
 
-Market structure detection in pure Python. No broker, no orders, no live data
-feed, no dependencies — you hand it a list of OHLC candles and it tells you what
-the structure is doing.
+Market structure and liquidity detection in pure Python. No broker, no orders,
+no live data feed, no dependencies — you hand it a list of OHLC candles and it
+tells you what price is doing.
 
-**Phase 1 (this release): market structure.** Swing points, HH/HL/LH/LL,
-Break of Structure, Change of Character.
+**Phase 1 (this release):**
+
+- **Market structure** — swing points, HH/HL/LH/LL, Break of Structure, Change of Character
+- **Liquidity** — equal highs/lows, session highs/lows, and liquidity sweeps
 
 ## Install
 
@@ -33,7 +35,8 @@ for s in signals:
     print(s.candle_index, s.event.value, s.trend_before.value, "->", s.trend_after.value)
 ```
 
-Run the built-in synthetic demo — an uptrend, two BOS, then a CHoCH reversal:
+Run the built-in synthetic demos — an uptrend with two BOS and a CHoCH reversal,
+then a stop hunt through a pair of equal highs:
 
 ```bash
 python3 -m trading_brain
@@ -47,6 +50,8 @@ python3 -m unittest discover -s tests -t .
 
 ## What it detects
 
+### `trading_brain.market_structure`
+
 | Concept | Meaning |
 | --- | --- |
 | Swing high / low | Fractal pivot: a candle whose high (low) exceeds the `lookback` candles on both sides |
@@ -57,6 +62,28 @@ python3 -m unittest discover -s tests -t .
 
 CHoCH is the event that fires the Invalidation Rule: when new structure confirms
 the trade is no longer valid, exit.
+
+### `trading_brain.liquidity`
+
+| Concept | Meaning |
+| --- | --- |
+| Equal highs / lows | Two or more highs (lows) within `tolerance` — resting liquidity |
+| Session high / low | The extreme of each block of consecutive candles sharing a `Session` tag |
+| Sweep | Price wicks **through** a level but **closes back** on the origin side — rejection |
+| Break | Price wicks through and *closes* beyond — reported with `rejected=False` |
+
+```python
+from trading_brain import find_equal_highs_lows, detect_sweeps
+
+levels = find_equal_highs_lows(candles, tolerance=0.5)
+for sweep in detect_sweeps(candles, levels):
+    print(sweep.candle_index, sweep.level.price, "rejected" if sweep.rejected else "broke through")
+```
+
+A level carries its own state: `detect_sweeps` stamps `swept` / `swept_at_index`
+on the levels you pass in, because a level is consumed once it has been taken.
+The consequence is that the call is **not idempotent** — rebuild the levels if
+you need to re-scan the same candles.
 
 ## No look-ahead
 
@@ -74,6 +101,14 @@ Two consequences worth knowing:
 - Once a break establishes a new level, a swing that confirms afterwards cannot
   overwrite it with an older one.
 
+Liquidity levels carry the same discipline in a `known_from` index. An equal-highs
+level becomes tradable the moment its **second** touch prints — not its last. Keying
+off the last touch would let a touch in the far future reach back and suppress a
+sweep that was perfectly valid at the time.
+
+Session extremes need no such guard: no candle inside a block can exceed that
+block's own high, so a session level can only ever be swept after its block ends.
+
 ## Choices baked in
 
 - **Strict comparisons.** A flat stretch of equal highs yields no swing, instead
@@ -86,11 +121,11 @@ Two consequences worth knowing:
 
 ## Not in scope for Phase 1
 
-Order blocks, fair value gaps, liquidity sweeps, multi-timeframe alignment,
-position sizing, and anything that touches a broker.
+Order blocks, fair value gaps, multi-timeframe alignment, position sizing,
+and anything that touches a broker.
 
 ## Status
 
-Phase 1 is feature complete and covered by 19 unit tests. This is analysis
+Phase 1 is feature complete and covered by 41 unit tests. This is analysis
 logic only — it produces labels and signals, not trades. Nothing here has been
 validated against live markets, and it makes no claim about profitability.

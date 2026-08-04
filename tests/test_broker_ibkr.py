@@ -12,7 +12,9 @@ import unittest
 from datetime import datetime
 from unittest import mock
 
-import ib_async
+import pytest
+
+ib_async = pytest.importorskip("ib_async")  # optional dep (extras: ibkr) -- skip cleanly, don't abort the whole run
 
 from trading_brain.broker.base import (
     ConnectionState,

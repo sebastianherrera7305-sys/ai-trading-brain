@@ -11,6 +11,7 @@ dependencies = [
     "fastapi>=0.100",
     "uvicorn[standard]>=0.23",
     "yfinance>=0.2",
+    "duckdb>=1.0",
 ]
 
 [project.optional-dependencies]
@@ -18,4 +19,7 @@ ibkr = ["ib_async>=1.0"]
 dev = ["pytest>=7", "httpx>=0.24"]
 
 [tool.setuptools]
-packages = ["trading_brain", "trading_brain.broker", "service"]
+packages = ["trading_brain", "trading_brain.broker", "trading_brain.storage", "service"]
+
+[tool.setuptools.package-data]
+"trading_brain.storage" = ["migrations/*.sql"]

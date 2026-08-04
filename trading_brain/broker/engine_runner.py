@@ -1,9 +1,9 @@
 """
 Engine Runner Module — AI Trading Brain, Phase 3
 
-Wires the exact same setup-detection logic the backtester was validated
-against (backtest.find_candidate_order) to a live Broker, one bar at a
-time, gated by BotSettings.
+Wires a Strategy -- the exact same setup-detection logic the backtester was
+validated against (strategy.SmartMoneyConceptsStrategy, by default) -- to
+a live Broker, one bar at a time, gated by BotSettings.
 
 Scope decision, stated plainly: this operates on DAILY bars, matching every
 validated backtest so far (see backtest_report.html / the four real-CSV
@@ -30,10 +30,11 @@ State machine per instrument:
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Set
 
-from ..backtest import BacktestConfig, find_candidate_order
+from ..config import BacktestConfig
 from ..displacement import Direction
 from ..market_structure import Candle
 from ..risk import position_size
+from ..strategy import SmartMoneyConceptsStrategy, Strategy
 from .base import Bar, Broker, OrderRequest, OrderSide
 from .settings import BotSettings
 
@@ -66,6 +67,7 @@ class LiveEngine:
         account_balance_provider: AccountBalanceProvider,
         config: Optional[BacktestConfig] = None,
         unit_value_per_point: float = 1.0,
+        strategy: Optional[Strategy] = None,
     ):
         self.symbol = symbol
         self.broker = broker
@@ -73,6 +75,7 @@ class LiveEngine:
         self.account_balance_provider = account_balance_provider
         self.config = config or BacktestConfig()
         self.unit_value_per_point = unit_value_per_point
+        self.strategy = strategy or SmartMoneyConceptsStrategy()
 
         self.candles: List[Candle] = []
         self.seen_origins: Set[int] = set()
@@ -85,8 +88,8 @@ class LiveEngine:
 
     def on_bar(self, bar: Bar) -> None:
         # timestamp deliberately dropped, not carried from bar.timestamp:
-        # find_candidate_order's session-time gate (is_allowed_to_trade)
-        # checks intraday session windows, which a daily bar's timestamp
+        # the strategy's session-time gate (is_allowed_to_trade) checks
+        # intraday session windows, which a daily bar's timestamp
         # (typically midnight) never falls inside. Every backtest this
         # system has been validated against ran the same way -- stripping
         # the timestamp to None, which is_allowed_to_trade's documented
@@ -182,7 +185,7 @@ class LiveEngine:
         if not settings.is_instrument_enabled(self.symbol):
             return
 
-        candidate = find_candidate_order(self.candles, i, self.config, self.seen_origins)
+        candidate = self.strategy.find_candidate(self.candles, i, self.config, self.seen_origins)
         if candidate is None:
             return
         if not settings.meets_min_tier(candidate.tier):

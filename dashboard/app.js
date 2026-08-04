@@ -74,6 +74,7 @@
 
     chartTabs: document.getElementById("chartTabs"),
     priceChart: document.getElementById("priceChart"),
+    tabBar: document.getElementById("tabBar"),
   };
 
   // -----------------------------------------------------------------------
@@ -660,6 +661,44 @@
   }
 
   // -----------------------------------------------------------------------
+  // Mobile tab bar — desktop (min-width:900px, see styles.css) shows every
+  // panel at once and hides this bar entirely; below that breakpoint only
+  // the active tab's panels are visible. Harmless to wire up unconditionally
+  // since CSS is what actually decides whether it has any visible effect.
+  // -----------------------------------------------------------------------
+
+  function setActiveTab(tab) {
+    document.body.setAttribute("data-tab", tab);
+    if (el.tabBar) {
+      Array.prototype.forEach.call(el.tabBar.querySelectorAll(".tab-btn"), function (btn) {
+        btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
+      });
+    }
+    // The chart's canvas has zero size while its panel is display:none;
+    // resize it once its container is visible again, or it stays blank.
+    if (tab === "chart" && chart && el.priceChart) {
+      chart.applyOptions({ width: el.priceChart.clientWidth });
+      chart.timeScale().fitContent();
+    }
+  }
+
+  function wireTabBar() {
+    if (!el.tabBar) return;
+    Array.prototype.forEach.call(el.tabBar.querySelectorAll(".tab-btn"), function (btn) {
+      btn.addEventListener("click", function () {
+        setActiveTab(btn.getAttribute("data-tab"));
+      });
+    });
+  }
+
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () { /* installable without it too */ });
+    });
+  }
+
+  // -----------------------------------------------------------------------
   // Init
   // -----------------------------------------------------------------------
 
@@ -677,6 +716,10 @@
     initChart();
     renderChartTabs();
     loadChartData();
+
+    setActiveTab("chart");
+    wireTabBar();
+    registerServiceWorker();
 
     wireSettingsInputs();
     wireFlattenButton();

@@ -9,6 +9,7 @@ Feed it a list of OHLC candles, it tells you what the structure is doing.
 """
 
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
@@ -43,6 +44,7 @@ class Candle:
     high: float
     low: float
     close: float
+    timestamp: Optional[datetime] = None  # optional; enables session-time gating in backtest.py
 
 
 @dataclass

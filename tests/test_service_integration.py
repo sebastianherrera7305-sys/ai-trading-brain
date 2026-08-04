@@ -104,3 +104,32 @@ def test_engines_are_wired_for_every_backtested_instrument():
     with client:
         state = app.state.app_state
         assert set(state.engines.keys()) == {"GC=F", "ES=F", "CL=F", "EURUSD=X"}
+
+
+def test_candles_endpoint_returns_ohlc_history():
+    client, app = _client()
+    with client:
+        resp = client.get("/api/candles/GC=F", params={"limit": 5})
+        assert resp.status_code == 200
+        bars = resp.json()
+        assert len(bars) == 5
+        for bar in bars:
+            assert set(bar.keys()) == {"time", "open", "high", "low", "close"}
+        # chronological order, not reversed
+        assert bars[0]["time"] < bars[-1]["time"]
+
+
+def test_candles_endpoint_unknown_symbol_returns_empty_not_error():
+    client, app = _client()
+    with client:
+        resp = client.get("/api/candles/NOPE=X")
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+
+def test_instruments_endpoint_lists_the_four_backtested_symbols():
+    client, app = _client()
+    with client:
+        resp = client.get("/api/instruments")
+        assert resp.status_code == 200
+        assert set(resp.json()) == {"GC=F", "ES=F", "CL=F", "EURUSD=X"}

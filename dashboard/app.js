@@ -20,7 +20,11 @@
     orders: [],             // array of order-log entries, newest first
     settings: null,         // BotSettings shape
     connectionState: "disconnected", // connected | connecting | disconnected | error
+    chartSymbol: null,      // currently selected instrument for the price chart
   };
+
+  var chart = null;
+  var chartSeries = null;
 
   var INSTRUMENT_LABELS = {
     "GC=F": "Gold GC=F",
@@ -67,6 +71,9 @@
     instrumentsList: document.getElementById("instrumentsList"),
     killSwitchInput: document.getElementById("killSwitchInput"),
     saveState: document.getElementById("saveState"),
+
+    chartTabs: document.getElementById("chartTabs"),
+    priceChart: document.getElementById("priceChart"),
   };
 
   // -----------------------------------------------------------------------
@@ -581,11 +588,84 @@
   }
 
   // -----------------------------------------------------------------------
+  // Chart — historical candles from GET /api/candles/{symbol}. Not a live
+  // feed (see the hint text in index.html): paper mode has no market-data
+  // source wired into the running service yet, so this shows real
+  // historical price action rather than a blank panel, but won't grow new
+  // candles during a live session until that's built.
+  // -----------------------------------------------------------------------
+
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  function initChart() {
+    if (!el.priceChart || typeof LightweightCharts === "undefined") return;
+
+    chart = LightweightCharts.createChart(el.priceChart, {
+      width: el.priceChart.clientWidth,
+      height: 320,
+      layout: {
+        background: { type: LightweightCharts.ColorType.Solid, color: cssVar("--panel") },
+        textColor: cssVar("--ink-dim"),
+      },
+      grid: {
+        vertLines: { color: cssVar("--border") },
+        horzLines: { color: cssVar("--border") },
+      },
+      rightPriceScale: { borderColor: cssVar("--border") },
+      timeScale: { borderColor: cssVar("--border") },
+      crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+    });
+
+    var good = cssVar("--good");
+    var critical = cssVar("--critical");
+    chartSeries = chart.addCandlestickSeries({
+      upColor: good, downColor: critical,
+      borderUpColor: good, borderDownColor: critical,
+      wickUpColor: good, wickDownColor: critical,
+    });
+
+    window.addEventListener("resize", function () {
+      if (chart && el.priceChart) chart.applyOptions({ width: el.priceChart.clientWidth });
+    });
+  }
+
+  function renderChartTabs() {
+    if (!el.chartTabs) return;
+    el.chartTabs.innerHTML = INSTRUMENT_ORDER.map(function (sym) {
+      var active = sym === state.chartSymbol ? " active" : "";
+      return '<button type="button" class="chart-tab' + active + '" data-symbol="' + sym + '">'
+        + (INSTRUMENT_LABELS[sym] || sym) + "</button>";
+    }).join("");
+
+    Array.prototype.forEach.call(el.chartTabs.querySelectorAll(".chart-tab"), function (btn) {
+      btn.addEventListener("click", function () {
+        state.chartSymbol = btn.getAttribute("data-symbol");
+        renderChartTabs();
+        loadChartData();
+      });
+    });
+  }
+
+  function loadChartData() {
+    if (!chartSeries || !state.chartSymbol) return;
+    fetch(apiUrl("/api/candles/" + encodeURIComponent(state.chartSymbol) + "?limit=300"))
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (candles) {
+        chartSeries.setData(candles || []);
+        if (chart) chart.timeScale().fitContent();
+      })
+      .catch(function () { /* chart just stays empty on failure — no crash */ });
+  }
+
+  // -----------------------------------------------------------------------
   // Init
   // -----------------------------------------------------------------------
 
   function init() {
     state.settings = defaultSettings();
+    state.chartSymbol = INSTRUMENT_ORDER[0];
     renderModeBadge();
     renderKillIndicator();
     renderSettingsForm();
@@ -593,6 +673,10 @@
     renderPositions();
     renderOrders();
     renderConnection();
+
+    initChart();
+    renderChartTabs();
+    loadChartData();
 
     wireSettingsInputs();
     wireFlattenButton();

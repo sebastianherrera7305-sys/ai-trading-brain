@@ -30,6 +30,17 @@
 
     <section class="panel">
       <div class="panel-header">
+        <h2>Chart</h2>
+        <div class="chart-tabs" id="chartTabs"><!-- injected by app.js --></div>
+      </div>
+      <div class="panel-body">
+        <div id="priceChart" class="price-chart"></div>
+        <div class="chart-hint">Historical daily candles — not a live feed (see note in README on paper-mode data).</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
         <h2>Account Summary</h2>
         <span class="hint" id="accountUpdated">no data</span>
       </div>
@@ -187,6 +198,7 @@
 
 <footer>AI Trading Brain — internal terminal. Not investment advice.</footer>
 
+<script src="lightweight-charts.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

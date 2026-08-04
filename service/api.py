@@ -6,6 +6,7 @@ dashboard (curl/scripts/monitoring)."""
 
 from fastapi import APIRouter, Request
 
+from . import candles as candles_module
 from . import serialize
 
 router = APIRouter(prefix="/api")
@@ -71,3 +72,13 @@ async def get_status(request: Request):
         "connection_state": state.broker.connection_state.value,
         "account_mode": state.get_settings().account_mode,
     }
+
+
+@router.get("/candles/{symbol}")
+async def get_candles(symbol: str, limit: int = 300):
+    return candles_module.get_candles(symbol, limit)
+
+
+@router.get("/instruments")
+async def get_instruments():
+    return candles_module.available_symbols()

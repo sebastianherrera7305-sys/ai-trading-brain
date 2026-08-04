@@ -566,6 +566,13 @@
         renderKillIndicator();
         renderSettingsForm();
         break;
+      case "candle":
+        if (data && data.symbol === state.chartSymbol && chartSeries) {
+          chartSeries.update({
+            time: data.time, open: data.open, high: data.high, low: data.low, close: data.close,
+          });
+        }
+        break;
       default:
         // unknown message kind — ignore, forward-compatible
         break;

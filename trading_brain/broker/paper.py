@@ -101,6 +101,17 @@ class PaperBroker(Broker):
     def subscribe_bars(self, symbol: str, on_bar: BarCallback) -> None:
         self._bar_callbacks.setdefault(symbol, []).append(on_bar)
 
+    def mark_price(self, symbol: str, price: float) -> None:
+        """Updates the last-known price and unrealized P&L only -- no
+        resting-order resolution, no bracket checks, no bar callbacks (so
+        it never reaches LiveEngine). For intraday price ticks a live feed
+        polls between real bars: this keeps the displayed price/P&L
+        current without the strategy engine seeing anything but genuine
+        bars at the cadence it was validated against (see
+        engine_runner.py's module docstring on why that matters)."""
+        self._last_price[symbol] = price
+        self._mark_to_market(symbol)
+
     def feed_bar(self, bar: Bar) -> None:
         """Test/driver entry point: simulates a new bar arriving for a
         symbol. Updates the mark price, resolves any resting limit orders

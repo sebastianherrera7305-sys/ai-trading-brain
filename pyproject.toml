@@ -10,6 +10,7 @@ requires-python = ">=3.9"
 dependencies = [
     "fastapi>=0.100",
     "uvicorn[standard]>=0.23",
+    "yfinance>=0.2",
 ]
 
 [project.optional-dependencies]

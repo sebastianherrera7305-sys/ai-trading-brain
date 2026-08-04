@@ -16,6 +16,7 @@ Broker selection is env-driven and defaults to the safe choice:
     trading is an explicit, deliberate config change, not an accident.
 """
 
+import asyncio
 import logging
 import os
 from pathlib import Path
@@ -29,6 +30,7 @@ from trading_brain.broker.paper import PaperBroker
 from trading_brain.broker.settings import SettingsStore
 
 from . import api
+from .live_feed import DEFAULT_INTERVAL_SECONDS, run_live_feed
 from .state import AppState
 from .ws import ConnectionManager
 
@@ -70,7 +72,22 @@ def create_app() -> FastAPI:
             app_state.broker.connect()
         except Exception:
             logger.exception("broker connect() failed at startup -- service is up, broker is not")
+
+        live_feed_task = None
+        if os.environ.get("TRADING_BROKER", "paper").lower() == "paper" \
+                and os.environ.get("LIVE_FEED", "true").lower() != "false":
+            interval = int(os.environ.get("LIVE_FEED_INTERVAL_SECONDS", str(DEFAULT_INTERVAL_SECONDS)))
+            live_feed_task = asyncio.create_task(run_live_feed(app_state, interval))
+            logger.info("live_feed: polling real quotes every %ss (set LIVE_FEED=false to disable)", interval)
+
         yield
+
+        if live_feed_task is not None:
+            live_feed_task.cancel()
+            try:
+                await live_feed_task
+            except asyncio.CancelledError:
+                pass
         try:
             app_state.broker.disconnect()
         except Exception:

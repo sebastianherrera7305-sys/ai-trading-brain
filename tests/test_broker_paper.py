@@ -255,6 +255,33 @@ def test_order_log_entries_carry_symbol_side_and_timestamp():
     assert entry["timestamp"]  # non-empty ISO string
 
 
+def test_mark_price_updates_unrealized_pnl_without_touching_resting_orders():
+    b = PaperBroker()
+    b.feed_bar(_bar("GC=F", 2500.0))
+    b.place_order(OrderRequest(symbol="GC=F", side=OrderSide.BUY, quantity=1))
+
+    resting = b.place_order(OrderRequest(symbol="ES=F", side=OrderSide.BUY, quantity=1, limit_price=5000.0))
+    assert resting.status == OrderStatus.SUBMITTED
+
+    b.mark_price("GC=F", 2515.0)
+
+    pos = b.get_positions()["GC=F"]
+    assert pos.unrealized_pnl == 15.0
+    # The resting ES=F order must still be untouched -- mark_price never
+    # resolves orders, only updates price/unrealized P&L.
+    assert "ES=F" not in b.get_positions()
+
+
+def test_mark_price_does_not_fire_bar_callbacks():
+    """mark_price must never reach anything subscribed via subscribe_bars
+    (that's how it stays invisible to LiveEngine) -- only feed_bar does."""
+    b = PaperBroker()
+    seen = []
+    b.subscribe_bars("GC=F", seen.append)
+    b.mark_price("GC=F", 2500.0)
+    assert seen == []
+
+
 def test_unrealized_pnl_marks_to_market_on_new_bar():
     b = PaperBroker()
     b.feed_bar(_bar("GC=F", 2500.0))

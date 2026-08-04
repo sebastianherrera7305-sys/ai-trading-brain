@@ -32,8 +32,6 @@ from .scoring import Tier
 # entrenamiento -- su total_r no es confiable, es ruido con forma de numero.
 MIN_TRAIN_TRADES = 3
 
-_TIER_RANK = {Tier.REJECT: 0, Tier.B: 1, Tier.A: 2, Tier.S: 3}
-
 
 @dataclass
 class FoldResult:

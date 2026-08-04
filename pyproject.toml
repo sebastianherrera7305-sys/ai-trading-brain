@@ -19,7 +19,7 @@ ibkr = ["ib_async>=1.0"]
 dev = ["pytest>=7", "httpx>=0.24"]
 
 [tool.setuptools]
-packages = ["trading_brain", "trading_brain.broker", "trading_brain.storage", "service"]
+packages = ["trading_brain", "trading_brain.broker", "trading_brain.storage", "trading_brain.risk_engine", "service"]
 
 [tool.setuptools.package-data]
 "trading_brain.storage" = ["migrations/*.sql"]

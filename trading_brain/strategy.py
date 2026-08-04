@@ -47,10 +47,8 @@ from .market_structure import (
     find_swing_points,
 )
 from .risk import TradePlan, validate_trade_risk
-from .scoring import ChecklistInputs, Tier, score_setup
+from .scoring import TIER_RANK, ChecklistInputs, Tier, score_setup
 from .sessions import is_allowed_to_trade
-
-_TIER_RANK = {Tier.REJECT: 0, Tier.B: 1, Tier.A: 2, Tier.S: 3}
 
 
 @dataclass
@@ -216,7 +214,7 @@ class SmartMoneyConceptsStrategy(Strategy):
             no_major_news=True,
         )
         score = score_setup(checklist)
-        if _TIER_RANK[score.tier] < _TIER_RANK[config.min_tier]:
+        if TIER_RANK[score.tier] < TIER_RANK[config.min_tier]:
             return None
 
         return TradeCandidate(

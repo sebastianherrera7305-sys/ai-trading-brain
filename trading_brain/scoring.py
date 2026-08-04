@@ -18,6 +18,19 @@ class Tier(Enum):
     REJECT = "Below B — DO NOT TRADE"
 
 
+# Public and singular on purpose: this ranking was duplicated as a
+# private _TIER_RANK dict in strategy.py and walk_forward.py -- exactly
+# the "second hand-written copy that can silently drift" pattern this
+# codebase otherwise takes care to avoid (see backtest.py's own
+# find_candidate_order extraction history). Risk Engine (Subsystem 3)
+# needed the same ranking a third time, which is what surfaced this.
+TIER_RANK = {Tier.REJECT: 0, Tier.B: 1, Tier.A: 2, Tier.S: 3}
+
+
+def meets_tier_floor(tier: Tier, floor: Tier) -> bool:
+    return TIER_RANK[tier] >= TIER_RANK[floor]
+
+
 @dataclass
 class ChecklistInputs:
     """One boolean per README mandatory condition. All must be True to even

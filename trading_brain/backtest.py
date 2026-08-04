@@ -288,6 +288,113 @@ def _window(candles: List[Candle], end: int, config: BacktestConfig) -> List[Can
     return candles[max(0, end - config.recompute_window):end]
 
 
+def find_candidate_order(
+    candles: List[Candle], i: int, config: BacktestConfig, seen_origins: Set[int]
+) -> Optional[_PendingOrder]:
+    """The 'is there a new setup worth a resting order as of candle i' check --
+    everything run_backtest does when it has neither an open trade nor a
+    pending order. Extracted so the live engine (engine_runner.py) evaluates
+    setups with the exact same logic the backtester was validated against,
+    rather than a second hand-written copy that can silently drift from it.
+
+    Mutates seen_origins in place (adds any displacement origins evaluated
+    this call), matching run_backtest's original one-evaluation-per-
+    displacement-ever behavior. Returns None if no tradeable candidate is
+    found at this step.
+    """
+    prefix = _window(candles, i + 1, config)
+    swings = classify_structure(find_swing_points(prefix, config.swing_lookback))
+    structure_signals = detect_bos_and_choch(prefix, swings)
+
+    eq_levels = find_equal_highs_lows(prefix, config.liquidity_tolerance)
+    sweeps = detect_sweeps(prefix, eq_levels)
+
+    disp_events = detect_displacement(
+        prefix, config.displacement_lookback, config.displacement_strength_multiplier
+    )
+    new_events = [e for e in disp_events if e.confirmed_at == i and e.candle_index not in seen_origins]
+    if not new_events:
+        return None
+
+    # trend_at needs the trend AS OF each event's own candle_index, not the
+    # trend for the whole prefix -- recompute on the shorter history ending
+    # at that candle, same no-look-ahead discipline as everywhere else here.
+    trend_at: Dict[int, Trend] = {}
+    for event in new_events:
+        sub_prefix = _window(candles, event.candle_index + 1, config)
+        sub_swings = classify_structure(find_swing_points(sub_prefix, config.swing_lookback))
+        trend_at[event.candle_index] = determine_trend(sub_swings)
+
+    for event in new_events:
+        seen_origins.add(event.candle_index)  # one evaluation per displacement, ever
+
+    relevant_events = [e for e in disp_events if e.candle_index in trend_at]
+    fvgs = validate_fvgs(relevant_events, sweeps, trend_at, config.sweep_lookback)
+    candidate = next((f for f in fvgs if f.origin_displacement_index in trend_at), None)
+    if candidate is None:
+        return None
+
+    built = _build_levels(candidate, sweeps, config)
+    if built is None:
+        return None
+    entry, stop_loss, take_profit, invalidation, reference = built
+
+    plan = TradePlan(
+        candidate.direction, entry, stop_loss, take_profit, invalidation,
+        stop_reference_level=reference,
+    )
+    risk_result = validate_trade_risk(plan)
+
+    last_structure_signal = next(
+        (s for s in reversed(structure_signals) if s.candle_index <= candidate.origin_displacement_index),
+        None,
+    )
+    wanted_trend = Trend.BULLISH if candidate.direction == Direction.BULLISH else Trend.BEARISH
+    market_structure_confirmed = (
+        last_structure_signal is not None
+        and last_structure_signal.event == StructureEvent.BOS
+        and last_structure_signal.trend_after == wanted_trend
+    )
+
+    # Session gate reflects the candle the order would actually be resting
+    # into, not the candle the setup was recognized on.
+    session_ok = True
+    gate_candle = candles[i + 1] if i + 1 < len(candles) else candles[i]
+    if gate_candle.timestamp is not None:
+        session_ok = is_allowed_to_trade(gate_candle.timestamp.time())
+
+    checklist = ChecklistInputs(
+        market_structure_confirmed=market_structure_confirmed,
+        liquidity_present=candidate.followed_sweep,
+        trend_alignment=candidate.aligned_with_trend,
+        displacement_confirmed=True,
+        fvg_valid=True,
+        # A more sophisticated "is price still realistically reachable" check
+        # is a natural Phase 3 addition; not modeled here.
+        clean_entry=True,
+        risk_management_defined=risk_result.valid,
+        session_time_ok=session_ok,
+        # No economic-calendar integration in Phase 1 -- see scoring.py.
+        no_major_news=True,
+    )
+    score = score_setup(checklist)
+    if _TIER_RANK[score.tier] < _TIER_RANK[config.min_tier]:
+        return None
+
+    return _PendingOrder(
+        origin_displacement_index=candidate.origin_displacement_index,
+        direction=candidate.direction,
+        entry=entry,
+        stop_loss=stop_loss,
+        take_profit=take_profit,
+        invalidation_price=invalidation,
+        tier=score.tier,
+        confidence_score=score.confidence_score,
+        checklist=checklist,
+        placed_at_index=i,
+    )
+
+
 def run_backtest(candles: List[Candle], config: Optional[BacktestConfig] = None) -> BacktestResult:
     config = config or BacktestConfig()
     result = BacktestResult()
@@ -334,97 +441,9 @@ def run_backtest(candles: List[Candle], config: Optional[BacktestConfig] = None)
             continue
 
         # Neither a pending order nor an open trade -- look for a new candidate.
-        prefix = _window(candles, i + 1, config)
-        swings = classify_structure(find_swing_points(prefix, config.swing_lookback))
-        structure_signals = detect_bos_and_choch(prefix, swings)
-
-        eq_levels = find_equal_highs_lows(prefix, config.liquidity_tolerance)
-        sweeps = detect_sweeps(prefix, eq_levels)
-
-        disp_events = detect_displacement(
-            prefix, config.displacement_lookback, config.displacement_strength_multiplier
-        )
-        new_events = [e for e in disp_events if e.confirmed_at == i and e.candle_index not in seen_origins]
-        if not new_events:
-            continue
-
-        # trend_at needs the trend AS OF each event's own candle_index, not the
-        # trend for the whole prefix -- recompute on the shorter history ending
-        # at that candle, same no-look-ahead discipline as everywhere else here.
-        trend_at: Dict[int, Trend] = {}
-        for event in new_events:
-            sub_prefix = _window(candles, event.candle_index + 1, config)
-            sub_swings = classify_structure(find_swing_points(sub_prefix, config.swing_lookback))
-            trend_at[event.candle_index] = determine_trend(sub_swings)
-
-        for event in new_events:
-            seen_origins.add(event.candle_index)  # one evaluation per displacement, ever
-
-        relevant_events = [e for e in disp_events if e.candle_index in trend_at]
-        fvgs = validate_fvgs(relevant_events, sweeps, trend_at, config.sweep_lookback)
-        candidate = next((f for f in fvgs if f.origin_displacement_index in trend_at), None)
-        if candidate is None:
-            continue
-
-        built = _build_levels(candidate, sweeps, config)
-        if built is None:
-            continue
-        entry, stop_loss, take_profit, invalidation, reference = built
-
-        plan = TradePlan(
-            candidate.direction, entry, stop_loss, take_profit, invalidation,
-            stop_reference_level=reference,
-        )
-        risk_result = validate_trade_risk(plan)
-
-        last_structure_signal = next(
-            (s for s in reversed(structure_signals) if s.candle_index <= candidate.origin_displacement_index),
-            None,
-        )
-        wanted_trend = Trend.BULLISH if candidate.direction == Direction.BULLISH else Trend.BEARISH
-        market_structure_confirmed = (
-            last_structure_signal is not None
-            and last_structure_signal.event == StructureEvent.BOS
-            and last_structure_signal.trend_after == wanted_trend
-        )
-
-        # Session gate reflects the candle the order would actually be resting
-        # into, not the candle the setup was recognized on.
-        session_ok = True
-        gate_candle = candles[i + 1] if i + 1 < len(candles) else candle
-        if gate_candle.timestamp is not None:
-            session_ok = is_allowed_to_trade(gate_candle.timestamp.time())
-
-        checklist = ChecklistInputs(
-            market_structure_confirmed=market_structure_confirmed,
-            liquidity_present=candidate.followed_sweep,
-            trend_alignment=candidate.aligned_with_trend,
-            displacement_confirmed=True,
-            fvg_valid=True,
-            # A more sophisticated "is price still realistically reachable" check
-            # is a natural Phase 3 addition; not modeled here.
-            clean_entry=True,
-            risk_management_defined=risk_result.valid,
-            session_time_ok=session_ok,
-            # No economic-calendar integration in Phase 1 -- see scoring.py.
-            no_major_news=True,
-        )
-        score = score_setup(checklist)
-        if _TIER_RANK[score.tier] < _TIER_RANK[config.min_tier]:
-            continue
-
-        pending = _PendingOrder(
-            origin_displacement_index=candidate.origin_displacement_index,
-            direction=candidate.direction,
-            entry=entry,
-            stop_loss=stop_loss,
-            take_profit=take_profit,
-            invalidation_price=invalidation,
-            tier=score.tier,
-            confidence_score=score.confidence_score,
-            checklist=checklist,
-            placed_at_index=i,
-        )
+        candidate_order = find_candidate_order(candles, i, config, seen_origins)
+        if candidate_order is not None:
+            pending = candidate_order
 
     if open_trade is not None:
         result.trades.append(open_trade)  # still open when the data ran out

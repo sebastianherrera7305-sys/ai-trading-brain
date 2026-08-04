@@ -11,3 +11,8 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .coverage
+
+# Runtime state -- risk settings/kill-switch state for a real account
+# must never be committed (also may hold account_mode=live).
+settings.json
+settings-*.json

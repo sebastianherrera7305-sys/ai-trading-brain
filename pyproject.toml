@@ -7,7 +7,14 @@ name = "ai-trading-brain"
 version = "0.1.0"
 description = "Market structure detection: swing points, HH/HL/LH/LL, BOS and CHoCH. Pure logic, no broker."
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+    "fastapi>=0.100",
+    "uvicorn[standard]>=0.23",
+]
+
+[project.optional-dependencies]
+ibkr = ["ib_async>=1.0"]
+dev = ["pytest>=7", "httpx>=0.24"]
 
 [tool.setuptools]
-packages = ["trading_brain"]
+packages = ["trading_brain", "trading_brain.broker", "service"]

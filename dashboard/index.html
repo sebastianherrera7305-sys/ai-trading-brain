@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Trading Brain — Terminal</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="disconnect-banner" id="disconnectBanner">
+  <span>&#9888;</span>
+  <span>Not connected to trading service — showing last known / empty state. Reconnecting automatically…</span>
+</div>
+
+<header class="topbar">
+  <div class="brand">AI TRADING BRAIN <span class="sub">terminal</span></div>
+  <span class="mode-badge paper" id="modeBadge">PAPER</span>
+  <span class="conn-badge disconnected" id="connBadge">
+    <span class="conn-dot"></span>
+    <span id="connBadgeText">disconnected</span>
+  </span>
+  <span class="kill-indicator" id="killIndicator">KILL SWITCH ACTIVE — NO NEW ENTRIES</span>
+  <div class="spacer"></div>
+  <button class="flatten-btn" id="flattenBtn">Flatten All</button>
+</header>
+
+<div class="layout">
+  <div class="main-col">
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Account Summary</h2>
+        <span class="hint" id="accountUpdated">no data</span>
+      </div>
+      <div class="panel-body">
+        <div class="stat-row" id="statRow">
+          <div class="stat-cell">
+            <div class="stat-label">Net Liquidation</div>
+            <div class="stat-value" id="statNetLiq">—</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-label">Cash</div>
+            <div class="stat-value" id="statCash">—</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-label">Buying Power</div>
+            <div class="stat-value" id="statBuyingPower">—</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-label">Realized P&amp;L (Today)</div>
+            <div class="stat-value" id="statRealizedToday">—</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-label">Unrealized P&amp;L</div>
+            <div class="stat-value" id="statUnrealized">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Positions</h2>
+        <span class="hint" id="positionsCount">0 open</span>
+      </div>
+      <div class="panel-body">
+        <div class="table-scroll" id="positionsWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th class="num">Quantity</th>
+                <th class="num">Avg Entry</th>
+                <th class="num">Unrealized P&amp;L</th>
+                <th class="num">Realized P&amp;L</th>
+              </tr>
+            </thead>
+            <tbody id="positionsBody"></tbody>
+          </table>
+          <div class="empty-state" id="positionsEmpty">
+            <div class="big">No open positions</div>
+            <div>Positions will appear here once the trading service reports a snapshot.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Order Log</h2>
+        <span class="hint" id="ordersCount">0 orders</span>
+      </div>
+      <div class="panel-body">
+        <div class="table-scroll" id="ordersWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Status</th>
+                <th class="num">Qty</th>
+                <th class="num">Avg Fill</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+          <div class="empty-state" id="ordersEmpty">
+            <div class="big">No orders yet</div>
+            <div>Submitted, filled, and rejected orders will log here, newest first.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="side-col">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Settings</h2>
+      </div>
+      <div class="settings-body">
+
+        <div class="field-group">
+          <label class="field-label" for="accountModeInput">Account Mode</label>
+          <select class="field-input" id="accountModeInput">
+            <option value="paper">Paper</option>
+            <option value="live">Live</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="riskPercentInput">Risk per Trade <span class="field-suffix">%</span></label>
+          <input class="field-input" id="riskPercentInput" type="number" min="0" step="0.1" />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="maxContractsInput">Max Contracts</label>
+          <input class="field-input" id="maxContractsInput" type="number" min="1" step="1" />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="minTierInput">Min Setup Tier</label>
+          <select class="field-input" id="minTierInput">
+            <option value="S">S — strictest</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="drawdownInput">Daily Drawdown Limit <span class="field-suffix">%</span></label>
+          <input class="field-input" id="drawdownInput" type="number" min="0" step="0.1" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field-group">
+          <div class="field-label">Enabled Instruments</div>
+          <div class="instruments-list" id="instrumentsList">
+            <!-- rows injected by app.js -->
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="kill-switch-block">
+          <div class="toggle-row">
+            <span class="label">Kill Switch</span>
+            <label class="switch">
+              <input type="checkbox" id="killSwitchInput" />
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="desc">Halts all NEW trade entries immediately. Existing open positions are left untouched — this does not flatten anything.</div>
+        </div>
+
+        <div class="save-state" id="saveState"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<footer>AI Trading Brain — internal terminal. Not investment advice.</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

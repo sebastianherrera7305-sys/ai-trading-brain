@@ -38,9 +38,14 @@ def _signal(trade_id="t1", symbol="GC=F") -> SignalRecord:
 
 
 def test_migrate_is_idempotent(storage):
+    before = storage.connection().execute("SELECT version FROM schema_migrations ORDER BY version").fetchall()
     storage.migrate()  # second call must not raise or duplicate schema
-    applied = storage.connection().execute("SELECT version FROM schema_migrations").fetchall()
-    assert applied == [(1,)]
+    after = storage.connection().execute("SELECT version FROM schema_migrations ORDER BY version").fetchall()
+    # not hardcoding a migration count: this suite gains a migration file
+    # per future subsystem, so the real assertion is "no duplicates
+    # appeared", not "there is exactly one migration"
+    assert after == before
+    assert len(after) == len(set(after))
 
 
 def test_signal_insert_then_get_round_trips_every_field(storage):

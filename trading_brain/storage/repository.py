@@ -1,5 +1,5 @@
 """
-Repositories — AI Trading Brain, Subsystem 1
+Repositories — AI Trading Brain, Subsystems 1-2
 
 One repository per table, each exposing only the operations
 ARCHITECTURE.md §41 (append-only) allows for that table. Record dataclasses
@@ -7,6 +7,10 @@ here intentionally do not import from strategy.py/scoring.py -- callers
 serialize (e.g. a ChecklistInputs to checklist_json) before handing a
 record to a repository, keeping storage a leaf in the dependency graph
 (ARCHITECTURE.md §6) that nothing above it needs to know the internals of.
+
+The registry_* repositories below are deliberately dumb -- state-machine
+validity (which status transitions are legal) is Registry's job
+(registry.py), not this layer's; see docs/specs/02-registry.md.
 """
 
 from dataclasses import dataclass
@@ -276,3 +280,169 @@ class AccountSnapshotRepository:
                 [account_mode, since],
             ).fetchall()
         return [AccountSnapshotRecord(*r) for r in rows]
+
+
+@dataclass(frozen=True)
+class ExperimentRecord:
+    experiment_id: str
+    experiment_type: str
+    code_git_hash: str
+    config_json: str
+    metrics_json: str
+    dataset_snapshot_id: Optional[str] = None
+    validation_standard_version: Optional[str] = None
+    random_seed: Optional[int] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+
+
+class ExperimentRepository:
+    """Append-only. dataset_snapshot_id/validation_standard_version are
+    free text for now -- see docs/specs/02-registry.md §1's scope
+    boundary; they become real foreign keys once the dataset-versioning
+    and validation-standards subsystems exist (ARCHITECTURE.md §40)."""
+
+    def __init__(self, storage: Storage):
+        self._conn = storage.connection()
+
+    def insert(self, e: ExperimentRecord) -> None:
+        self._conn.execute(
+            """INSERT INTO experiments (
+                experiment_id, experiment_type, code_git_hash, config_json, metrics_json,
+                dataset_snapshot_id, validation_standard_version, random_seed, started_at, completed_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            [
+                e.experiment_id, e.experiment_type, e.code_git_hash, e.config_json, e.metrics_json,
+                e.dataset_snapshot_id, e.validation_standard_version, e.random_seed, e.started_at, e.completed_at,
+            ],
+        )
+
+    def get(self, experiment_id: str) -> Optional[ExperimentRecord]:
+        row = self._conn.execute(
+            "SELECT experiment_id, experiment_type, code_git_hash, config_json, metrics_json, "
+            "dataset_snapshot_id, validation_standard_version, random_seed, started_at, completed_at "
+            "FROM experiments WHERE experiment_id = ?",
+            [experiment_id],
+        ).fetchone()
+        return ExperimentRecord(*row) if row else None
+
+
+@dataclass(frozen=True)
+class ArtifactRecord:
+    artifact_id: str
+    artifact_type: str
+    version: str
+    source_experiment_id: str
+    created_at: datetime
+
+
+class RegistryArtifactRepository:
+    """Append-only, and immutable in a stronger sense than the other
+    append-only tables here: an artifact's identity (type, version,
+    source experiment) never changes after creation -- only its status
+    does, and that lives in RegistryStatusTransitionRepository instead
+    (ADR-0002)."""
+
+    def __init__(self, storage: Storage):
+        self._conn = storage.connection()
+
+    def insert(self, a: ArtifactRecord) -> None:
+        self._conn.execute(
+            "INSERT INTO registry_artifacts (artifact_id, artifact_type, version, source_experiment_id, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            [a.artifact_id, a.artifact_type, a.version, a.source_experiment_id, a.created_at],
+        )
+
+    def get(self, artifact_id: str) -> Optional[ArtifactRecord]:
+        row = self._conn.execute(
+            "SELECT artifact_id, artifact_type, version, source_experiment_id, created_at "
+            "FROM registry_artifacts WHERE artifact_id = ?",
+            [artifact_id],
+        ).fetchone()
+        return ArtifactRecord(*row) if row else None
+
+    def all(self) -> List[ArtifactRecord]:
+        rows = self._conn.execute(
+            "SELECT artifact_id, artifact_type, version, source_experiment_id, created_at "
+            "FROM registry_artifacts"
+        ).fetchall()
+        return [ArtifactRecord(*r) for r in rows]
+
+    def by_type(self, artifact_type: str) -> List[ArtifactRecord]:
+        rows = self._conn.execute(
+            "SELECT artifact_id, artifact_type, version, source_experiment_id, created_at "
+            "FROM registry_artifacts WHERE artifact_type = ?",
+            [artifact_type],
+        ).fetchall()
+        return [ArtifactRecord(*r) for r in rows]
+
+
+@dataclass(frozen=True)
+class StatusTransitionRecord:
+    artifact_id: str
+    status: str
+    transitioned_at: datetime
+    promoted_by: str
+    promotion_checklist_snapshot: Optional[str] = None
+
+
+class RegistryStatusTransitionRepository:
+    """Append-only -- ADR-0002. No update()/delete(); a rejected
+    promotion (Registry.promote() catching an illegal transition) must
+    never reach this class's insert() at all, so "no trace of a rejected
+    attempt" is enforced by Registry, the caller, not by this repository
+    refusing bad data -- this layer trusts what it's given, same as every
+    other repository here (validity is a business-logic concern, storage
+    stays a dumb leaf per ARCHITECTURE.md §6)."""
+
+    def __init__(self, storage: Storage):
+        self._conn = storage.connection()
+
+    def insert(self, t: StatusTransitionRecord) -> None:
+        self._conn.execute(
+            "INSERT INTO registry_status_transitions "
+            "(artifact_id, status, transitioned_at, promoted_by, promotion_checklist_snapshot) "
+            "VALUES (?, ?, ?, ?, ?)",
+            [t.artifact_id, t.status, t.transitioned_at, t.promoted_by, t.promotion_checklist_snapshot],
+        )
+
+    def history(self, artifact_id: str) -> List[StatusTransitionRecord]:
+        rows = self._conn.execute(
+            "SELECT artifact_id, status, transitioned_at, promoted_by, promotion_checklist_snapshot "
+            "FROM registry_status_transitions WHERE artifact_id = ? ORDER BY transitioned_at ASC",
+            [artifact_id],
+        ).fetchall()
+        return [StatusTransitionRecord(*r) for r in rows]
+
+    def latest(self, artifact_id: str) -> Optional[StatusTransitionRecord]:
+        row = self._conn.execute(
+            "SELECT artifact_id, status, transitioned_at, promoted_by, promotion_checklist_snapshot "
+            "FROM registry_status_transitions WHERE artifact_id = ? "
+            "ORDER BY transitioned_at DESC LIMIT 1",
+            [artifact_id],
+        ).fetchone()
+        return StatusTransitionRecord(*row) if row else None
+
+    def latest_as_of(self, artifact_id: str, at: datetime) -> Optional[StatusTransitionRecord]:
+        row = self._conn.execute(
+            "SELECT artifact_id, status, transitioned_at, promoted_by, promotion_checklist_snapshot "
+            "FROM registry_status_transitions WHERE artifact_id = ? AND transitioned_at <= ? "
+            "ORDER BY transitioned_at DESC LIMIT 1",
+            [artifact_id, at],
+        ).fetchone()
+        return StatusTransitionRecord(*row) if row else None
+
+    def all_latest(self) -> List[StatusTransitionRecord]:
+        """One row per artifact_id: its most recent transition. The basis
+        for Registry.live_artifacts() -- filtering this down to
+        status='live' rather than re-deriving 'latest per artifact' at
+        the Registry layer."""
+        rows = self._conn.execute(
+            """SELECT t.artifact_id, t.status, t.transitioned_at, t.promoted_by, t.promotion_checklist_snapshot
+               FROM registry_status_transitions t
+               INNER JOIN (
+                   SELECT artifact_id, MAX(transitioned_at) AS max_ts
+                   FROM registry_status_transitions GROUP BY artifact_id
+               ) latest ON t.artifact_id = latest.artifact_id AND t.transitioned_at = latest.max_ts"""
+        ).fetchall()
+        return [StatusTransitionRecord(*r) for r in rows]

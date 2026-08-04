@@ -14,3 +14,4 @@ Use `TEMPLATE.md` for new entries. Numbered sequentially, never reused.
 | ADR | Title | Status |
 |---|---|---|
 | [0001](0001-unified-storage-engine.md) | Unified storage engine: DuckDB from the start, not SQLite-then-migrate | Accepted |
+| [0002](0002-registry-status-history-is-append-only.md) | Registry status is an append-only transition log, not a mutable column | Accepted |

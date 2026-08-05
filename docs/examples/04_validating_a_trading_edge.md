@@ -1,6 +1,6 @@
 # Example 04 — Validating a Trading Edge: Signal, Distribution, and Monitoring
 
-## Research question
+## Problem
 
 A quant proposes a long/short strategy and a probabilistic signal.
 
@@ -14,7 +14,32 @@ A quant proposes a long/short strategy and a probabilistic signal.
 5. Do the observed returns match the assumed distribution? (chi2 variance
    test; Student-t machinery)
 
-## Mathematical approach
+Why this matters: every strategy claim passes through this gauntlet
+before capital is allocated — is the edge real (tests), is it
+*predictable* (signal tests), is it *monitorable* in live trading (SPRT),
+are our probability models honest (Brier), and does the data match the
+model's assumptions (chi2)? A strategy that fails any of these five
+questions is not allocatable.
+
+## Dataset
+
+Synthetic series, standardized and scaled so the numbers read like a
+real strategy desk's records:
+
+* long/short legs: 500 daily returns each (seed 7) — the long leg
+  carries a 15bp edge at 1% daily volatility, the short leg a zero mean;
+* a strategy versus its benchmark, 500 days (seed 8): benchmark 2bp/day,
+  strategy equals benchmark plus 5bp of daily alpha;
+* a binary timing signal active on 30% of days, carrying +0.4% on signal
+  days (seed 8);
+* a 20W/3L trade log (and a weak 14W/6L log) feeding the Bayesian and
+  sequential monitors;
+* 600 logistic-calibrated probability forecasts with realized outcomes
+  (seed 9) for the Brier evaluation;
+* 1,258 daily returns from N(0.0006, 0.011) (seed 21) for the model-fit
+  chi2 check.
+
+## Method
 
 * **Welch t-test** (`two_sample_t_test`): compares two means without
   equal-variance assumptions; returns `(t, df, p)`.
@@ -34,14 +59,6 @@ A quant proposes a long/short strategy and a probabilistic signal.
   error, normalized against the climatological forecast.
 * **chi2** (`chi2_cdf`, `chi2_p_value`, `chi2_inv_cdf`): variance
   hypothesis tests — under H0, `(n-1) * s^2 / sigma0^2 ~ chi2(n-1)`.
-
-## Why this matters
-
-Every strategy claim passes through this gauntlet before capital is
-allocated: is the edge real (tests), is it *predictable* (signal tests),
-is it *monitorable* in live trading (SPRT), are our probability models
-honest (Brier), and does the data match the model's assumptions (chi2)?
-A strategy that fails any of these five questions is not allocatable.
 
 ## Code
 

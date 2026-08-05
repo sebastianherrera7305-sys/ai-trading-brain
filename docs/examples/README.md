@@ -1,15 +1,18 @@
 # quant_research — Research Examples
 
 Reproducible walkthroughs showing the intended use of the package in
-realistic quantitative research workflows. Each file states a research
-question, the mathematical approach, why the metric matters, how to read
-the results, and the limitations of the method.
+realistic quantitative research workflows. Each file follows the same
+research-report template: **Problem** (the question and why it matters),
+**Dataset** (what data was used and how it was generated),
+**Method** (the mathematical approach), **Code** (the executable
+demonstration), **Interpretation** (how to read the results), and
+**Limitations** (what the method does not claim).
 
 Every python code block in these files is executed as a regression test
 (`tests/test_quant_research_examples.py`): the examples are the contract.
 If a future change breaks the behavior documented here, the suite fails.
 
-| File | Research question | Functions demonstrated |
+| File | Problem | Functions demonstrated |
 |------|-------------------|------------------------|
 | [01_trading_expectancy_and_position_sizing.md](01_trading_expectancy_and_position_sizing.md) | Is the expectancy positive and how big should positions be? | expected_value, kelly_fraction, fractional_kelly, kelly_expected_growth, binomial_pmf, binomial_cdf, binomial_ci, normal_power, normal_z_score, beta_posterior, beta_mean, beta_var, probability_edge_above |
 | [02_market_regime_detection.md](02_market_regime_detection.md) | Is the market trending, mean-reverting, or a random walk? | rolling_mean, rolling_std, rolling_sum, rolling_z_score, z_score, centered_smooth, ewma, ewma_volatility, rolling_correlation, autocorrelation, autocorrelation_series, variance_ratio, variance_ratio_z_score, hurst_exponent, lagged_features, simple_returns |

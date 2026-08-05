@@ -43,6 +43,9 @@ def autocorrelation(x: np.ndarray, lag: int = 1) -> float:
         common serial-dependence readout for return series: positive =
         persistence, negative = reversal.
 
+    NaN policy
+        NaN/Inf entries are dropped before computation; the documented minimum finite count is enforced (ValueError otherwise).
+
     Raises
         ValueError if fewer than 2 finite observations, or lag < 1.
         Returns NaN when the lag leaves fewer than 2 usable pairs.
@@ -75,11 +78,17 @@ def autocorrelation_series(x: np.ndarray, max_lag: int) -> np.ndarray:
         A vector of autocorrelation(x, lag) for lag in 1..max_lag —
         the quick visual check for structure before any formal test.
 
+    NaN policy
+        NaN/Inf entries are dropped per lag (delegates to autocorrelation); requires >= 2 finite observations.
+
     Raises
         ValueError if max_lag < 1.
 
     Complexity
         O(max_lag * n) time, O(max_lag) memory.
+
+    References
+        Box, Jenkins & Reinsel (2015), Time Series Analysis, 4th ed. (sample autocorrelation).
 
     Examples
         >>> import numpy as np
@@ -115,6 +124,9 @@ def hurst_exponent(x: np.ndarray, min_lag: int = 10, max_lag: int = 0) -> float:
         NaN if fewer than 3 valid lags remain. On random-walk level
         series the estimator saturates near 1 — feed stationary series
         (e.g. returns), not prices.
+
+    NaN policy
+        NaN/Inf entries are dropped before estimation (requires >= 20 finite); returns NaN when fewer than 3 valid lags remain.
 
     Raises
         ValueError if fewer than 20 finite observations, or
@@ -179,6 +191,9 @@ def variance_ratio(returns: np.ndarray, q: int) -> float:
         dependence pushes it above 1, negative below. The q-period
         returns use non-overlapping sums of length q.
 
+    NaN policy
+        NaN/Inf entries are dropped; requires >= 2q+2 finite observations; returns NaN when the 1-period variance is zero.
+
     Raises
         ValueError if q < 2, or fewer than 2q+2 finite observations
         (the minimum the ratio can mean anything for).
@@ -218,6 +233,9 @@ def variance_ratio_z_score(returns: np.ndarray, q: int) -> float:
         homoskedastic random-walk null (Lo & MacKinlay 1988).
         |z| > 1.96 rejects the random walk at 5%.
 
+    NaN policy
+        NaN/Inf entries are dropped (via variance_ratio); returns NaN when variance_ratio is NaN.
+
     Raises
         ValueError propagated from variance_ratio.
 
@@ -253,11 +271,17 @@ def lagged_features(x: np.ndarray, lags: int) -> np.ndarray:
         missing history is at the START of each lag column). The
         standard input layout for autocorrelation-based models.
 
+    NaN policy
+        Input NaN values propagate into the feature columns; leading rows are NaN-padded where lags do not exist.
+
     Raises
         ValueError if lags < 1.
 
     Complexity
         O(n * lags) time, O(n * (lags+1)) memory.
+
+    References
+        Lütkepohl (2005), New Introduction to Multiple Time Series Analysis (lag vectors in VAR models).
 
     Examples
         >>> import numpy as np

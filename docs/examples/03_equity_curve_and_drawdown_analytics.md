@@ -1,6 +1,6 @@
 # Example 03 — Equity Curve, Return Distribution, and Drawdown Analytics
 
-## Research question
+## Problem
 
 A strategy produced five years of simulated daily P&L (1,258 trading days)
 on a $100,000 book.
@@ -11,7 +11,22 @@ on a $100,000 book.
   trusted, or do fat tails matter?
 * What is a defensible confidence interval for the average daily return?
 
-## Mathematical approach
+Why this matters: the drawdown number is what risk committees quote —
+"this strategy lost X% at its worst". The Sharpe *estimate* is useless
+without its standard error: a 0.44 Sharpe measured over five years is
+compatible with a very different true Sharpe. And the normality check
+decides whether Gaussian statistics (VaR, mean-variance) are even
+admissible for this book.
+
+## Dataset
+
+Five years of simulated daily strategy P&L on a $100,000 book: 1,258
+daily returns drawn from N(0.0006, 0.011) with seed 21 — a 15%
+annualized return at 17% volatility, structurally identical to a real
+trend-following book's record. Synthetic so the true mean and variance
+are known exactly and every estimator can be scored against them.
+
+## Method
 
 * **Return conventions.** `simple_returns` and `log_returns` convert a
   price series; `cumulative_returns` compounds daily returns into an
@@ -30,14 +45,6 @@ on a $100,000 book.
   (Student-t), while `bootstrap_confidence_interval` (block bootstrap)
   does not — the comparison tells us whether normality is a safe
   assumption for this return series.
-
-## Why this matters
-
-The drawdown number is what risk committees quote: "this strategy lost
-X% at its worst". The Sharpe *estimate* is useless without its standard
-error — a 0.44 Sharpe measured over five years is compatible with a very
-different true Sharpe. And the normality check decides whether Gaussian
-statistics (VaR, mean-variance) are even admissible for this book.
 
 ## Code
 

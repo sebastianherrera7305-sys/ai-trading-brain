@@ -1,6 +1,6 @@
 # Example 05 — Correlated Instruments: Portfolio Variance and Hedging
 
-## Research question
+## Problem
 
 A portfolio holds E-mini S&P 500 futures (ES) and E-mini Nasdaq futures
 (NQ). They share a common factor but have their own idiosyncratic risk.
@@ -12,7 +12,24 @@ A portfolio holds E-mini S&P 500 futures (ES) and E-mini Nasdaq futures
 * If we hedge NQ exposure with ES, what hedge ratio minimizes variance?
 * How robust are the estimates to a single corrupted observation?
 
-## Mathematical approach
+Why this matters: correlation drives position limits, margin
+requirements, and hedging programs. Overestimating correlation
+understates risk (a "diversified" book that is really one factor);
+underestimating it produces unnecessary hedge costs. The covariance
+matrix is the input to every risk model the platform will build in later
+phases, and the rank-based check is the first line of defense against
+corrupted data in the feed.
+
+## Dataset
+
+2,000 daily returns for each of two index futures, ES and NQ, generated
+from a one-factor model (seed 99): a common market factor
+N(0, 1), NQ = factor + N(0, 0.4), ES = 0.8 * factor + N(0, 0.4). The
+construction makes the true ES-NQ correlation ~0.88 known in advance.
+A later step deliberately corrupts a single observation (a -40-sigma
+tick) to test estimator robustness to feed errors.
+
+## Method
 
 * **Pearson correlation** measures linear co-movement
   `rho = Cov(a, b) / (sd(a) * sd(b))`.
@@ -26,15 +43,6 @@ A portfolio holds E-mini S&P 500 futures (ES) and E-mini Nasdaq futures
 * **Minimum-variance hedge ratio**: hedging asset 2 with asset 1 at
   `h* = Cov(2,1) / Var(1)` minimizes the hedged variance
   `Var(2 - h* 1) = Var(2) (1 - rho^2)`.
-
-## Why this matters
-
-Correlation drives position limits, margin requirements, and hedging
-programs. Overestimating correlation understates risk (a "diversified"
-book that is really one factor); underestimating it produces unnecessary
-hedge costs. The covariance matrix is the input to every risk model the
-platform will build in later phases, and the rank-based check is the
-first line of defense against corrupted data in the feed.
 
 ## Code
 

@@ -68,6 +68,9 @@ def normal_cdf(x: float) -> float:
         Phi(x) = 0.5 * (1 + erf(x / sqrt(2))), computed with
         math.erf (full double precision, no approximation).
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Complexity
         O(1).
 
@@ -91,8 +94,14 @@ def normal_sf(x: float) -> float:
         1 - Phi(x) computed directly via erfc for tail accuracy
         (subtracting Phi(x) from 1 loses precision in the far tail).
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Complexity
         O(1).
+
+    References
+        Abramowitz & Stegun (1964), Handbook of Mathematical Functions, §26.2.
 
     Examples
         >>> round(normal_sf(1.959964), 5)
@@ -109,6 +118,9 @@ def normal_inv_cdf(p: float) -> float:
         the full range), exact enough for every statistical cutoff this
         package produces; not a substitute for a high-precision inverse
         in the extreme tails.
+
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
 
     Raises
         ValueError if p is not in (0, 1).
@@ -167,8 +179,14 @@ def normal_z_score(two_sided_p: float) -> float:
         z such that P(|Z| >= z) = p, i.e. z = Phi^-1(1 - p/2).
         z = 1.96 for p = 0.05.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Complexity
         O(1).
+
+    References
+        Abramowitz & Stegun (1964), Handbook of Mathematical Functions, §26.2.
 
     Examples
         >>> round(normal_z_score(0.05), 4)
@@ -183,11 +201,17 @@ def normal_pdf(x: float, mu: float = 0.0, sigma: float = 1.0) -> float:
     Definition
         f(x) = exp(-0.5 z^2) / (sigma sqrt(2 pi)), z = (x - mu)/sigma.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if sigma <= 0.
 
     Complexity
         O(1).
+
+    References
+        Abramowitz & Stegun (1964), Handbook of Mathematical Functions, §26.2.
 
     Examples
         >>> round(normal_pdf(0.0), 9)
@@ -222,6 +246,9 @@ def regularized_incomplete_beta(x: float, a: float, b: float) -> float:
         hypergeometric power series this function previously used
         terminates exactly for integer b but cancels catastrophically
         for large b (a real bug: I_0.134(37, 164) came out > 1).
+
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
 
     Raises
         ValueError if a <= 0 or b <= 0.
@@ -298,6 +325,9 @@ def student_t_cdf(t: float, df: float) -> float:
         may be fractional (Welch's t-test produces non-integer
         degrees of freedom; the beta kernel accepts any df > 0).
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if df <= 0.
 
@@ -332,8 +362,14 @@ def student_t_sf(t: float, df: float) -> float:
         1 - student_t_cdf(t, df) — the one-sided upper tail used by
         the t-tests in this module. df may be fractional.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Complexity
         O(max_iter).
+
+    References
+        Abramowitz & Stegun (1964), Handbook of Mathematical Functions, §26.7.
 
     Examples
         >>> round(student_t_sf(1.812, 10), 4)
@@ -352,11 +388,17 @@ def student_t_inv_cdf(p: float, df: float) -> float:
         [-40, 40] wrong at extremes (df=1: t_{0.995} = 63.66).
         df may be fractional.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if p not in (0, 1) or df <= 0.
 
     Complexity
         O(200) CDF evaluations.
+
+    References
+        Abramowitz & Stegun (1964), Handbook of Mathematical Functions, §26.7.
 
     Examples
         >>> round(student_t_inv_cdf(0.95, 10), 3)
@@ -435,6 +477,9 @@ def chi2_cdf(x: float, df: int) -> float:
         a missing factor of two here is the classic wrong-CDF bug.
         df is an integer >= 1.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if df < 1.
 
@@ -464,8 +509,14 @@ def chi2_p_value(x: float, df: int) -> float:
     Definition
         1 - chi2_cdf(x, df) — the tail used by the Jarque-Bera test.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Complexity
         O(max_iter).
+
+    References
+        Abramowitz & Stegun (1964), Handbook of Mathematical Functions, §26.4.
 
     Examples
         >>> round(chi2_p_value(3.8415, 1), 4)
@@ -483,11 +534,17 @@ def chi2_inv_cdf(p: float, df: int) -> float:
         plus ~20 standard deviations so even extreme quantiles are
         bracketed.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if p not in (0, 1) or df < 1.
 
     Complexity
         O(300) CDF evaluations.
+
+    References
+        Abramowitz & Stegun (1964), Handbook of Mathematical Functions, §26.4.
 
     Examples
         >>> round(chi2_inv_cdf(0.95, 4), 3)
@@ -518,11 +575,17 @@ def variance(x: np.ndarray, ddof: int = 1) -> float:
         s^2 = sum((x - mean)^2) / (n - ddof) over finite observations.
         ddof=1 (default) gives the unbiased estimator.
 
+    NaN policy
+        NaN/Inf entries are dropped before computation; the documented minimum finite count is enforced (ValueError otherwise).
+
     Raises
         ValueError if fewer than 2 finite observations.
 
     Complexity
         O(n) time, O(n) memory.
+
+    References
+        Casella & Berger (2002), Statistical Inference, 2nd ed. (sample moments).
 
     Examples
         >>> import numpy as np
@@ -541,12 +604,18 @@ def covariance(a: np.ndarray, b: np.ndarray, ddof: int = 1) -> float:
         cov(a, b) over the pairs where both entries are finite.
         ddof=1 (default) gives the unbiased estimator.
 
+    NaN policy
+        Observations where either input is non-finite are dropped pairwise; the documented minimum finite pair count is enforced (ValueError otherwise).
+
     Raises
         ValueError if a and b differ in length, or fewer than 2
         jointly-finite pairs.
 
     Complexity
         O(n) time, O(n) memory.
+
+    References
+        Casella & Berger (2002), Statistical Inference, 2nd ed. (sample moments).
 
     Examples
         >>> import numpy as np
@@ -573,11 +642,17 @@ def covariance_matrix(x: np.ndarray, ddof: int = 1) -> np.ndarray:
         naturally uses: each column a return series). A 1-D input is
         treated as a single variable and returns a 1x1 matrix.
 
+    NaN policy
+        NaN entries propagate into the covariance matrix (numpy cov semantics) — drop or impute columns before calling.
+
     Raises
         ValueError if x is neither 1-D nor 2-D.
 
     Complexity
         O(n * k^2) time for n observations and k variables.
+
+    References
+        Casella & Berger (2002), Statistical Inference, 2nd ed. (sample moments).
 
     Examples
         >>> import numpy as np
@@ -603,11 +678,17 @@ def coefficient_of_variation(x: np.ndarray) -> float:
         for strictly positive means; returns NaN when the mean is zero
         or non-finite. ddof=1 both moments.
 
+    NaN policy
+        NaN/Inf entries are dropped before computation; the documented minimum finite count is enforced (ValueError otherwise).
+
     Raises
         ValueError if fewer than 2 finite observations.
 
     Complexity
         O(n) time, O(n) memory.
+
+    References
+        Casella & Berger (2002), Statistical Inference, 2nd ed. (sample moments).
 
     Examples
         >>> import numpy as np
@@ -631,11 +712,17 @@ def empirical_cdf(x: np.ndarray, values: np.ndarray) -> np.ndarray:
         check — what the data itself says before any parametric
         assumption.
 
+    NaN policy
+        NaN/Inf in the data are dropped before building the ECDF; a NaN query value returns 0.0 (no finite observation is <= NaN).
+
     Raises
         ValueError if x has no finite observations.
 
     Complexity
         O(n log n) sort + O(k log n) lookups.
+
+    References
+        van der Vaart (1998), Asymptotic Statistics, Ch. 19 (empirical distribution function).
 
     Examples
         >>> import numpy as np
@@ -659,6 +746,9 @@ def mean_confidence_interval(
         mean +- t_{1-alpha/2, n-1} * s / sqrt(n) — t-distributed
         because small samples are the norm in edge research. A
         zero-variance sample returns (m, m, m).
+
+    NaN policy
+        NaN/Inf entries are dropped before computation; the documented minimum finite count is enforced (ValueError otherwise).
 
     Raises
         ValueError if fewer than 2 finite observations.
@@ -697,6 +787,9 @@ def two_sample_t_test(a: np.ndarray, b: np.ndarray) -> Tuple[float, float, float
         Welch-Satterthwaite degrees of freedom; returns (t, df,
         two-sided p). When both samples are constant the test is
         degenerate and returns (0.0, n_a + n_b - 2, 1.0).
+
+    NaN policy
+        NaN/Inf entries are dropped before computation; the documented minimum finite count is enforced (ValueError otherwise).
 
     Raises
         ValueError if either sample has fewer than 2 finite
@@ -742,12 +835,18 @@ def paired_t_test(a: np.ndarray, b: np.ndarray) -> Tuple[float, float]:
         differences; returns (t, p). A zero-variance difference series
         returns (0.0, 1.0).
 
+    NaN policy
+        Observations where either input is non-finite are dropped pairwise; the documented minimum finite pair count is enforced (ValueError otherwise).
+
     Raises
         ValueError if a and b differ in length, or fewer than 2 finite
         pairs.
 
     Complexity
         O(n) time, O(n) memory.
+
+    References
+        Casella & Berger (2002), Statistical Inference, 2nd ed. (matched-pairs t-test).
 
     Examples
         >>> import numpy as np
@@ -779,6 +878,9 @@ def skewness(x: np.ndarray) -> float:
         g1 * sqrt(n(n-1))/(n-2) where g1 = m3/m2^1.5 (Joanes & Gill
         G1, "adjusted Fisher-Pearson"). NaN for n < 3 or zero
         variance; 0 for any symmetric distribution.
+
+    NaN policy
+        NaN/Inf entries are dropped before computation; the documented minimum finite count is enforced (ValueError otherwise).
 
     Raises
         ValueError if x has no finite observations. NaN for n < 3 or
@@ -815,6 +917,9 @@ def excess_kurtosis(x: np.ndarray) -> float:
     Definition
         (n-1)/((n-2)(n-3)) * ((n+1) g2 + 6) where g2 = m4/m2^2 - 3
         (Joanes & Gill G2). NaN for n < 4 or zero variance.
+
+    NaN policy
+        NaN/Inf entries are dropped before computation; the documented minimum finite count is enforced (ValueError otherwise).
 
     Raises
         ValueError if x has no finite observations. NaN for n < 4 or
@@ -859,6 +964,9 @@ def jarque_bera(x: np.ndarray) -> Tuple[float, float]:
         Returns (nan, nan) when the sample is too small for the
         moments.
 
+    NaN policy
+        NaN/Inf entries are dropped before computation; the documented minimum finite count is enforced (ValueError otherwise).
+
     Raises
         ValueError if fewer than 4 finite observations.
 
@@ -898,6 +1006,9 @@ def pearson_correlation(a: np.ndarray, b: np.ndarray) -> float:
         NaN when either series has zero variance (correlation is
         undefined). Note: this function does NOT rank — for monotone
         association use spearman_correlation.
+
+    NaN policy
+        Observations where either input is non-finite are dropped pairwise; the documented minimum finite pair count is enforced (ValueError otherwise).
 
     Raises
         ValueError if a and b differ in length, or fewer than 2
@@ -941,6 +1052,9 @@ def spearman_correlation(a: np.ndarray, b: np.ndarray) -> float:
         a measure of monotone association that is robust to outliers
         and nonlinearity.
 
+    NaN policy
+        Observations where either input is non-finite are dropped pairwise; the documented minimum finite pair count is enforced (ValueError otherwise).
+
     Raises
         ValueError if a and b differ in length, or fewer than 2
         jointly-finite pairs.
@@ -951,6 +1065,9 @@ def spearman_correlation(a: np.ndarray, b: np.ndarray) -> float:
     References
         C. Spearman (1904), "The proof and measurement of association
         between two things", American Journal of Psychology 15.
+
+    References
+        Gibbons & Chakraborti (2003), Nonparametric Statistical Inference, 4th ed. (rank correlation).
 
     Examples
         >>> import numpy as np
@@ -980,6 +1097,9 @@ def sharpe_standard_error(sharpe: float, n: int) -> float:
         sqrt((1 + 0.5 * S^2) / n) (Lo 2002): the scale of sampling
         noise in a Sharpe estimate from n observations. The tool behind
         "is this Sharpe just noise?" on small samples.
+
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
 
     Raises
         ValueError if n < 2.

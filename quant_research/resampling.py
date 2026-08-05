@@ -65,6 +65,9 @@ def block_bootstrap(
         failure mode for strategies that trade the same regime
         repeatedly).
 
+    NaN policy
+        NaN/Inf entries are dropped before resampling; requires >= 2 finite values (ValueError otherwise).
+
     Raises
         ValueError if fewer than 2 finite observations, or block_size
         outside [1, n].
@@ -121,6 +124,9 @@ def stationary_bootstrap(
         and the series wraps around, so each bootstrap series is weakly
         stationary. Preferred over fixed-block when dependence exists at
         unknown scales.
+
+    NaN policy
+        NaN/Inf entries are dropped before resampling; requires >= 2 finite values (ValueError otherwise).
 
     Raises
         ValueError if fewer than 2 finite observations, or
@@ -184,6 +190,9 @@ def bootstrap_confidence_interval(
         points of the block-bootstrap distribution (Efron's percentile
         interval). No parametric distributional assumption is made.
 
+    NaN policy
+        NaN/Inf entries are dropped before resampling; requires >= 2 finite values (ValueError otherwise).
+
     Raises
         ValueError propagated from block_bootstrap (>= 2 finite
         observations, block_size in [1, n]).
@@ -234,6 +243,9 @@ def permutation_test_two_sample(
         least as extreme as the observed one. Returns the two-sided
         p-value with the +1/+1 Monte-Carlo convention (an exact 0 is
         impossible and under-reports significance).
+
+    NaN policy
+        Observations where either input is non-finite are dropped pairwise; the documented minimum finite pair count is enforced (ValueError otherwise).
 
     Raises
         ValueError if either sample has fewer than 2 finite
@@ -289,6 +301,9 @@ def permutation_test_signal(
         permutations whose selected-performance is >= the observed one
         (+1/+1 convention). This is the nullity gate required for every
         backtest result in docs/research/05 section 2.3.
+
+    NaN policy
+        Positions where `returns` is non-finite are dropped (signals re-aligned); requires >= 1 signal.
 
     Raises
         ValueError if returns and signals differ in length, or signals
@@ -363,6 +378,9 @@ def reality_check_p_value(
         This is the honest p-value for a tuned strategy's reported
         backtest — the plain walk-forward p-value ignores that the
         parameter grid was searched.
+
+    NaN policy
+        Trial rows containing any non-finite value are dropped entirely; at least one fully-finite row must remain.
 
     Raises
         ValueError if the input is not 2-D, has no fully-finite rows,
@@ -448,6 +466,9 @@ def deflated_sharpe_ratio(
         DSR is then a one-sided normal tail probability of the distance
         between the observed best and E[max], corrected for
         skew/kurtosis.
+
+    NaN policy
+        Non-finite trial Sharpes are dropped; requires >= 2 finite values (ValueError otherwise).
 
     Raises
         ValueError if fewer than 2 finite trial Sharpes, n_obs < 2, or

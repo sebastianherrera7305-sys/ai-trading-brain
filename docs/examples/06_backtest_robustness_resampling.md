@@ -1,6 +1,6 @@
 # Example 06 — Backtest Robustness: Bootstrap, Reality Check, and Deflated Sharpe
 
-## Research question
+## Problem
 
 A quant desk searched 40 strategy variants on the same five years of data
 (750 trades each) and the best one reports an annualized Sharpe of 1.9
@@ -14,7 +14,24 @@ A quant desk searched 40 strategy variants on the same five years of data
   correcting for both multiple trials *and* return non-normality?
   (Deflated Sharpe Ratio)
 
-## Mathematical approach
+Why this matters: the expected best Sharpe of 40 pure-noise strategies is
+substantial — `E[max]` grows with the number of trials, so "best of 40"
+is not evidence. Every backtest report that ignores this overstates its
+edge by construction; this is the single most common cause of allocator
+losses in systematic strategies.
+
+## Dataset
+
+Five years of simulated daily strategy returns, 1,258 days from
+N(0.0006, 0.011) with seed 21 — the same book as Example 03. The desk
+claims to have searched 40 strategy variants of 750 trades each on this
+record and kept the best (per-trade Sharpe 0.12, annualized 1.9). Two
+counterfactual scenarios, each holding the search structure fixed:
+A) all 40 variants are pure noise (seed 11); B) identical, except one
+variant carries a genuine per-trade Sharpe of 0.15 (seed 17). The
+bootstrap questions are answered on the seed-21 series.
+
+## Method
 
 * **Block bootstrap** (`block_bootstrap`, `bootstrap_confidence_interval`)
   resamples contiguous blocks of observations, preserving the
@@ -34,14 +51,6 @@ A quant desk searched 40 strategy variants on the same five years of data
   by the *expected maximum* over the trial count and by the
   skewness/kurtosis of returns. Inputs are **per-period** Sharpe ratios
   and the per-period observation count.
-
-## Why this matters
-
-The expected best Sharpe of 40 pure-noise strategies is substantial:
-`E[max]` grows with the number of trials, so "best of 40" is not
-evidence. Every backtest report that ignores this overstates its edge by
-construction — this is the single most common cause of allocator losses
-in systematic strategies.
 
 ## Code
 

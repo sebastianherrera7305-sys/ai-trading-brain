@@ -48,12 +48,18 @@ def binomial_pmf(k: int, n: int, p: float) -> float:
         (lgamma differences) to avoid overflow for large n. Exact for
         the small trade counts this package works with.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if p not in [0, 1]. k < 0 or k > n return 0.0 (an
         impossible event, not an error).
 
     Complexity
         O(1).
+
+    References
+        Feller (1968), An Introduction to Probability Theory and Its Applications, Vol. I, §6.1-6.2.
 
     Examples
         >>> round(binomial_pmf(5, 10, 0.5), 6)
@@ -84,8 +90,14 @@ def binomial_cdf(k: int, n: int, p: float) -> float:
         trade count, not a scientific-sample count. k < 0 gives 0.0;
         k >= n gives 1.0.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Complexity
         O(min(k, n)) time, O(1) memory.
+
+    References
+        Feller (1968), An Introduction to Probability Theory and Its Applications, Vol. I, §6.1-6.2.
 
     Examples
         >>> round(binomial_cdf(4, 10, 0.5), 6)
@@ -108,6 +120,9 @@ def binomial_ci(k: int, n: int, confidence: float = 0.95) -> Tuple[float, float]
         a small trade count — the normal approximation is not.
         Boundary successes (k=0 or k=n) give 0.0 / 1.0 endpoints
         respectively.
+
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
 
     Raises
         ValueError if confidence not in (0, 1) or n < 1.
@@ -145,11 +160,17 @@ def beta_cdf(x: float, a: float, b: float) -> float:
         The regularized incomplete beta function I_x(a, b); the
         conjugate-prior CDF for Bernoulli win rates.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if a <= 0 or b <= 0.
 
     Complexity
         O(max_iter) on the 2F1 series kernel.
+
+    References
+        Abramowitz & Stegun (1964), Handbook of Mathematical Functions, §26.5.
 
     Examples
         >>> round(beta_cdf(0.5, 2, 2), 9)
@@ -165,11 +186,17 @@ def beta_inv_cdf(p: float, a: float, b: float) -> float:
         Deterministic bisection on beta_cdf — 200 halvings bring the
         bracket below float precision on [0, 1].
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if p not in [0, 1], a <= 0 or b <= 0.
 
     Complexity
         O(200) beta-CDF evaluations.
+
+    References
+        Abramowitz & Stegun (1964), Handbook of Mathematical Functions, §26.5.
 
     Examples
         >>> round(beta_inv_cdf(0.5, 2, 2), 6)
@@ -194,10 +221,20 @@ def beta_inv_cdf(p: float, a: float, b: float) -> float:
 
 
 def beta_mean(a: float, b: float) -> float:
-    """E[X] = a / (a + b) for X ~ Beta(a, b).
+    """Mean of the Beta(a, b) distribution.
+
+    Definition
+        E[X] = a / (a + b) — the prior-mean readout used when setting
+        up a Beta prior on a win rate.
+
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
 
     Complexity
         O(1).
+
+    References
+        Abramowitz & Stegun (1964), Handbook of Mathematical Functions, §26.1 (beta-function identities).
 
     Examples
         >>> beta_mean(2.0, 3.0)
@@ -207,10 +244,20 @@ def beta_mean(a: float, b: float) -> float:
 
 
 def beta_var(a: float, b: float) -> float:
-    """Var[X] = ab / ((a+b)^2 (a+b+1)) for X ~ Beta(a, b).
+    """Variance of the Beta(a, b) distribution.
+
+    Definition
+        Var[X] = ab / ((a+b)^2 (a+b+1)) — the prior-dispersion readout
+        paired with beta_mean.
+
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
 
     Complexity
         O(1).
+
+    References
+        Abramowitz & Stegun (1964), Handbook of Mathematical Functions, §26.1 (beta-function identities).
 
     Examples
         >>> round(beta_var(2.0, 3.0), 4)
@@ -230,8 +277,14 @@ def beta_posterior(
         `failures` losses under a Beta(prior_alpha, prior_beta) prior
         on the win rate.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Complexity
         O(1).
+
+    References
+        Gelman et al. (2013), Bayesian Data Analysis, 3rd ed. (conjugate beta-binomial updating).
 
     Examples
         >>> beta_posterior(1.0, 1.0, 8, 2)
@@ -256,8 +309,14 @@ def probability_edge_above(
         the Edge Monitor (docs/research/05 section 2.7). A Uniform(0,1)
         prior (a = b = 1) is the default.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Complexity
         O(max_iter) on the beta kernel.
+
+    References
+        Gelman et al. (2013), Bayesian Data Analysis, 3rd ed. (conjugate beta-binomial updating).
 
     Examples
         >>> round(probability_edge_above(8, 2), 4)
@@ -279,11 +338,17 @@ def expected_value(p: float, gain: float, loss: float) -> float:
         `loss` otherwise. Positive EV is the necessary (not sufficient)
         condition for a tradeable edge.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if p not in [0, 1].
 
     Complexity
         O(1).
+
+    References
+        Feller (1968), An Introduction to Probability Theory and Its Applications, Vol. I (expectation).
 
     Examples
         >>> round(expected_value(0.6, 1.0, 1.0), 6)
@@ -302,6 +367,9 @@ def kelly_fraction(p: float, b: float) -> float:
         a bet paying b:1 with win probability p (Kelly 1956; Thorp's
         betting formulation). Returns 0.0 for non-positive-edge bets
         (no growth-optimal bet exists); raises for degenerate inputs.
+
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
 
     Raises
         ValueError if p not in (0, 1) or b <= 0.
@@ -335,11 +403,17 @@ def fractional_kelly(p: float, b: float, fraction: float) -> float:
         conservative choice for live sizing (lower growth, far lower
         drawdown risk; see MacLean-Thorp-Ziemba on fractional Kelly).
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if fraction not in (0, 1].
 
     Complexity
         O(1).
+
+    References
+        MacLean, Thorp & Ziemba (2011), The Kelly Capital Growth Investment Criterion, World Scientific.
 
     Examples
         >>> round(fractional_kelly(0.6, 1.0, 0.25), 6)
@@ -359,11 +433,17 @@ def kelly_expected_growth(p: float, b: float, f: float) -> float:
         the Kelly fraction; f beyond the point where the loser's term
         goes to 0 (f >= 1) returns -inf (certain ruin).
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if p not in [0, 1], or b <= 0, or f <= 0.
 
     Complexity
         O(1).
+
+    References
+        MacLean, Thorp & Ziemba (2011), The Kelly Capital Growth Investment Criterion, World Scientific.
 
     Examples
         >>> round(kelly_expected_growth(0.6, 1.0, 0.2), 6)
@@ -390,6 +470,9 @@ def brier_score(probabilities: np.ndarray, outcomes: np.ndarray) -> float:
         perfect; 0.25 = always predicting 0.5; 1 = always wrong with
         certainty. The calibration component of every probabilistic
         model output this package scores.
+
+    NaN policy
+        Outcomes are validated to exactly 0/1 (NaN is rejected with ValueError); a NaN probability propagates to a NaN score.
 
     Raises
         ValueError if the arrays differ in length, or outcomes are not
@@ -429,6 +512,9 @@ def brier_skill_score(
         climatology defaults to the sample mean win rate. Perfect
         forecast scores 1.0, a tie with the base rate scores 0.0, and
         worse-than-base-rate forecasts go negative.
+
+    NaN policy
+        Outcomes are validated to exactly 0/1 (NaN is rejected with ValueError); a NaN probability propagates to a NaN score.
 
     Raises
         ValueError if the arrays differ in length, or outcomes are not
@@ -490,6 +576,9 @@ def sprt_bernoulli(
         Note: the LL ratio is compared after every trade, so the
         boundaries can be crossed mid-series; the decision reflects
         the FIRST crossing.
+
+    NaN policy
+        Outcomes are validated to exactly 0/1 (NaN is rejected with ValueError).
 
     Raises
         ValueError if outcomes are not 0/1, p0/p1 not in
@@ -560,6 +649,9 @@ def sprt_expected_sample_size(
         indifference point (no drift, boundaries never approached on
         average).
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError unless 0 < p0 < p1 < 1.
 
@@ -599,11 +691,17 @@ def normal_power(
         enough trades so the power of the test you will run is not an
         embarrassment.
 
+    NaN policy
+        None — scalar math; NaN flows through the formulas unless caught by the documented range validation.
+
     Raises
         ValueError if sigma <= 0 or n < 1.
 
     Complexity
         O(1).
+
+    References
+        Cohen (1988), Statistical Power Analysis for the Behavioral Sciences, 2nd ed. (z-test power).
 
     Examples
         >>> round(normal_power(0.2, 1.0, 100), 4)

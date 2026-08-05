@@ -50,8 +50,14 @@ def simple_returns(prices: np.ndarray) -> np.ndarray:
         price). Prices are used as given: a zero or negative price
         yields inf/NaN, matching numpy's own conventions.
 
+    NaN policy
+        NaN prices propagate position-aligned into the output (no dropping or interpolation).
+
     Complexity
         O(n) time, O(n) memory; vectorized.
+
+    References
+        Tsay (2010), Analysis of Financial Time Series, 3rd ed., §1.3 (return definitions).
 
     Examples
         >>> import numpy as np
@@ -82,8 +88,14 @@ def log_returns(prices: np.ndarray) -> np.ndarray:
         price). Preferred over simple_returns wherever returns are
         added across time (log returns compound by summation).
 
+    NaN policy
+        NaN prices propagate position-aligned into the output (no dropping or interpolation).
+
     Complexity
         O(n) time, O(n) memory; vectorized.
+
+    References
+        Tsay (2010), Analysis of Financial Time Series, 3rd ed., §1.3 (return definitions).
 
     Examples
         >>> import numpy as np
@@ -111,8 +123,14 @@ def cumulative_returns(returns: np.ndarray, start_value: float = 1.0) -> np.ndar
         leading NaN of the return converters) are treated as zero
         return, so the output length always equals the input length.
 
+    NaN policy
+        NaN returns propagate position-aligned into the output (no dropping or interpolation).
+
     Complexity
         O(n) time, O(n) memory; vectorized cumprod.
+
+    References
+        Tsay (2010), Analysis of Financial Time Series, 3rd ed., §1.3 (return definitions).
 
     Examples
         >>> import numpy as np
@@ -136,8 +154,14 @@ def prices_from_returns(returns: np.ndarray, start_price: float = 100.0) -> np.n
         treated as zero. Exact inverse of simple_returns for finite
         prices (see the round-trip test).
 
+    NaN policy
+        NaN returns propagate position-aligned into the output (no dropping or interpolation).
+
     Complexity
         O(n) time, O(n) memory.
+
+    References
+        Tsay (2010), Analysis of Financial Time Series, 3rd ed., §1.3 (return definitions).
 
     Examples
         >>> import numpy as np
@@ -159,8 +183,14 @@ def drawdown_prices(prices: np.ndarray) -> np.ndarray:
         at each new high. The negative of this series is the drawdown
         from the peak.
 
+    NaN policy
+        A NaN price poisons the running maximum and hence all later output positions (accumulate semantics); earlier positions are unaffected.
+
     Complexity
         O(n) time, O(n) memory.
+
+    References
+        Magdon-Ismail & Atiya (2004), "Maximum drawdown risk", Quantitative Finance 4(5).
 
     Examples
         >>> import numpy as np
@@ -183,11 +213,17 @@ def z_score(x: np.ndarray, ddof: int = 1) -> np.ndarray:
         deviation is zero (constant input) every output is NaN, because
         a constant series has no meaningful z-score.
 
+    NaN policy
+        Statistics are computed from finite values only; input NaN positions are preserved as NaN in the output. Requires >= 2 finite values.
+
     Complexity
         O(n) time, O(n) memory.
 
     Raises
         ValueError if fewer than 2 finite observations.
+
+    References
+        Tsay (2010), Analysis of Financial Time Series, 3rd ed. (standardized return series).
 
     Examples
         >>> import numpy as np
@@ -218,12 +254,18 @@ def rolling_mean(x: np.ndarray, window: int) -> np.ndarray:
         are NaN (window not yet complete). Missing values inside a
         window propagate (the window mean is NaN).
 
+    NaN policy
+        A NaN inside a window yields NaN at that output position; incomplete windows at the series start are NaN.
+
     Complexity
         O(n*w) time in the window size, O(n + w) memory; implemented
         with sliding_window_view (exact, no cumsum cancellation).
 
     Raises
         ValueError if window < 1.
+
+    References
+        Tsay (2010), Analysis of Financial Time Series, 3rd ed. (rolling-window statistics).
 
     Examples
         >>> import numpy as np
@@ -251,11 +293,17 @@ def rolling_std(x: np.ndarray, window: int, ddof: int = 1) -> np.ndarray:
         first w-1 positions are NaN. With ddof=1 a one-point window has
         NaN std (undefined sample variance).
 
+    NaN policy
+        A NaN inside a window yields NaN at that output position; incomplete windows at the series start are NaN.
+
     Complexity
         O(n*w) time, O(n + w) memory.
 
     Raises
         ValueError if window < 1.
+
+    References
+        Tsay (2010), Analysis of Financial Time Series, 3rd ed. (rolling-window statistics).
 
     Examples
         >>> import numpy as np
@@ -282,11 +330,17 @@ def rolling_sum(x: np.ndarray, window: int) -> np.ndarray:
     Definition
         s_t = sum(x_{t-w+1}..x_t) for t >= w; first w-1 positions NaN.
 
+    NaN policy
+        A NaN inside a window yields NaN at that output position; incomplete windows at the series start are NaN.
+
     Complexity
         O(n*w) time, O(n + w) memory.
 
     Raises
         ValueError if window < 1.
+
+    References
+        Tsay (2010), Analysis of Financial Time Series, 3rd ed. (rolling-window statistics).
 
     Examples
         >>> import numpy as np
@@ -314,11 +368,17 @@ def rolling_z_score(x: np.ndarray, window: int, ddof: int = 1) -> np.ndarray:
         window statistics. NaN wherever the window is incomplete, the
         window std is zero, or x_t is missing.
 
+    NaN policy
+        A window with an undefined rolling statistic (insufficient data, zero variance) or any NaN inside it yields NaN at that position.
+
     Complexity
         O(n*w) time, O(n + w) memory.
 
     Raises
         ValueError if window < 1.
+
+    References
+        Tsay (2010), Analysis of Financial Time Series, 3rd ed. (rolling-window statistics).
 
     Examples
         >>> import numpy as np
@@ -345,11 +405,17 @@ def rolling_correlation(
         window. NaN where either window is incomplete, either std is
         zero, or a window contains missing values.
 
+    NaN policy
+        A window with an undefined rolling statistic (insufficient data, zero variance) or any NaN inside it yields NaN at that position.
+
     Complexity
         O(n*w) time, O(n + w) memory.
 
     Raises
         ValueError if a and b differ in length, or window < 1.
+
+    References
+        Tsay (2010), Analysis of Financial Time Series, 3rd ed. (rolling-window statistics).
 
     Examples
         >>> import numpy as np
@@ -404,6 +470,9 @@ def ewma(x: np.ndarray, span: float) -> np.ndarray:
         at e_0 = x_0. Full same-length output; no burn-in window.
         span=1 is the identity filter.
 
+    NaN policy
+        A NaN at any position propagates to all later output positions (recursive filter).
+
     Complexity
         O(n) time, O(n) memory; single pass, exact recursion.
 
@@ -438,6 +507,9 @@ def ewma_volatility(
         vol_t = sqrt(periods * EMA_t(r^2)) with span weighting — the
         classic RiskMetrics-style vol proxy with no window burn-in.
         Missing returns are treated as zero (no information).
+
+    NaN policy
+        A NaN at any position propagates to all later output positions (recursive filter).
 
     Complexity
         O(n) time, O(n) memory.
@@ -474,11 +546,17 @@ def centered_smooth(x: np.ndarray, window: int) -> np.ndarray:
         closer than (w-1)/2 to either end are NaN. A centered average
         does not lag the signal, unlike trailing filters.
 
+    NaN policy
+        A NaN inside a window yields NaN at that output position; incomplete windows at the series edges are NaN.
+
     Complexity
         O(n*w) time, O(n + w) memory.
 
     Raises
         ValueError if window is not a positive odd integer.
+
+    References
+        Standard symmetric moving-average smoother; see e.g. Tsay (2010), Analysis of Financial Time Series, 3rd ed.
 
     Examples
         >>> import numpy as np
@@ -507,8 +585,14 @@ def safe_divide(a: np.ndarray, b: np.ndarray, default: float = np.nan) -> np.nda
         otherwise. Broadcast shapes are allowed (same rules as numpy's
         ufunc broadcasting).
 
+    NaN policy
+        NaN and zero denominators yield `default`; a NaN numerator still yields NaN (only the denominator is guarded).
+
     Complexity
         O(n) time, O(n) memory.
+
+    References
+        None — engineering helper; no external source.
 
     Examples
         >>> import numpy as np
@@ -533,8 +617,14 @@ def drop_nan(x: np.ndarray) -> np.ndarray:
         statistic in this package drops non-finite observations before
         validating the minimum count.
 
+    NaN policy
+        All NaN/Inf entries are removed; the result contains only finite values.
+
     Complexity
         O(n) time, O(n) memory.
+
+    References
+        None — engineering helper; no external source.
 
     Examples
         >>> import numpy as np
@@ -554,9 +644,18 @@ def required_length(name: str, x: np.ndarray, minimum: int) -> None:
         states the minimum, so callers never have to guess why a small
         sample was rejected.
 
+    NaN policy
+        No arrays are processed; NaN/Inf data are never touched here.
+
     Raises
         ValueError with a message naming the function, the minimum and
         the actual count.
+
+    Complexity
+        O(n) time, O(1) memory (finite-count scan).
+
+    References
+        None — engineering helper; no external source.
 
     Examples
         >>> import numpy as np

@@ -2,7 +2,7 @@
 
 **Status:** DELIVERED — awaiting authorization before Phase 2
 **Version:** 0.3.0 (API frozen at this version after approval)
-**Commits:** `1d8f832` (initial), `81fcfd8` (hardening round 1), this commit (examples + API stabilization)
+**Commits:** `1d8f832` (initial), `81fcfd8` (hardening round 1), `9cfc068` (examples + API stabilization + report), this commit (freeze pass: docstring conventions, technical-debt inventory, freeze checklist)
 
 ---
 
@@ -117,6 +117,31 @@ examples; the full suite (including doctests) verified the result.
 **From this version on the public API is stable; breaking changes require
 an ADR.**
 
+### API consistency conventions (verified by script in the freeze pass)
+
+- **Parameter order**: data argument(s) first, then configuration, then
+  optional statistics defaults; two-input functions are uniformly
+  `(a, b)`; the primary series is `x`.
+- **Seeds**: every stochastic function takes `seed: int = 0` and uses
+  `np.random.default_rng`; no hidden state between calls.
+- **Defaults**: `ddof=1` (sample moments), `confidence=0.95` (intervals),
+  `alpha = beta = 0.05` (test designs), `statistic=` callable in all
+  five resampling functions, `n_permutations=5000`, `n_bootstrap=1000`.
+- **Return conventions**: tests return `(statistic, [df,] p)`;
+  intervals return `(point, lo, hi)` with the point first;
+  `sprt_bernoulli` returns a dict; everything else a scalar/array.
+- **Exceptions**: `ValueError` for domain/shape violations, `TypeError`
+  for strings; degenerate math returns documented values (NaN/inf)
+  instead of raising. `Raises` sections document function-local
+  validation only — the shared input contract (coercion, scalar/2-D
+  rejection, generator consumption) is documented once in `_input.py`.
+- **Docstring format**: every public function carries
+  Definition / Raises / Complexity / References / Examples sections
+  (Raises and References omitted only where genuinely inapplicable,
+  e.g. pure scalars and engineering helpers) plus an explicit
+  `NaN policy` statement. All 74 public docstrings audited by script in
+  the freeze pass.
+
 ## 4. Mathematical assumptions (documented per function in docstrings)
 
 - **Normal/Student-t/chi2/Beta kernels**: standard CDF/quantile
@@ -179,6 +204,14 @@ Five layers, each executable:
 executed by the test suite, and a guard test fails if any public function
 is not demonstrated in at least one example.
 
+**Documentation audit (freeze pass)**: every public docstring now states
+an explicit `NaN policy` matched to the verified behavior of the function
+(drop-then-min, pairwise-complete, position-aligned propagation,
+window-propagation, recursive-filter propagation, scalar flow, or
+explicit rejection), and missing References/Complexity/Definition
+sections were filled from primary sources. The audit is scripted
+(section presence + `NaN policy` presence per `__all__` function).
+
 ## 6. Benchmark summary
 
 `benchmarks/bench_quant_research.py` measures each function's empirical
@@ -240,7 +273,7 @@ sub-linear algorithms.
 ## 8. Test summary
 
 ```
-Full repo suite:            657 passed, 2 skipped, 2 warnings (~170 s)
+Full repo suite:            661 passed, 2 skipped, 2 warnings (~205 s)
 quant_research tests:       336 tests + 74 doctests
   - unit suites:            103
   - input contract:          79
@@ -281,6 +314,37 @@ platform conditional), unrelated to quant_research.
   (Phase 3 concern).
 - Bootstrap CIs are percentile-based, not bias-corrected.
 
+### Explicit technical debt (accepted, none blocking Phase 2)
+
+- **Duplicated rolling-window loops.** `rolling_mean/std/sum` repeat the
+  sliding-window pattern; a shared kernel would centralize edge handling
+  but is deferred until a second consumer appears (YAGNI).
+- **`ewma` is a pure-Python loop** (3.6 s at 8M points). A vectorized
+  form needs scipy-style convolution tricks the package avoids by
+  design; acceptable for research data, flagged for Phase 4 simulation
+  workloads.
+- **Two `(point, lo, hi)` interval implementations** (t-based in
+  `statistics`, bootstrap in `resampling`) are separate; a common
+  protocol could unify them but would couple the two modules.
+- **DSR's per-period input convention is documentation-only.** A runtime
+  guard (e.g. rejecting `|sharpe| > 5`) would catch annualized mis-feeds;
+  deliberately deferred to keep the function total.
+- **`statistic=` defaults to `np.mean`** — ergonomic, but hides the
+  statistic choice; callers are encouraged to pass explicit functions
+  (the examples do).
+- **The scipy reference suite is an optional extra**; institutional CI
+  should pin it (Recommendation 3).
+- **Numerical approximation debt**: Acklam inverse normal (1.15e-9),
+  bisection-based quantiles (200 halvings), Numerical Recipes continued
+  fraction — all documented, all bounded, none replaceable without a new
+  dependency.
+- **Hidden coupling** (intentional, documented): probability and
+  resampling import statistics kernels, so a change to
+  `regularized_incomplete_beta` ripples into beta CDF, Student-t, and
+  binomial CI — caught by the reference suites.
+- **`hurst_exponent(max_lag=0)` uses 0 as an "automatic" sentinel** —
+  a documented quirk, not a type error; accepted for ergonomics.
+
 ## 10. Future extension points
 
 - **Phase 2 (statistical validation):** FDR/Benjamini-Hochberg
@@ -300,7 +364,9 @@ platform conditional), unrelated to quant_research.
 ## 11. Examples produced
 
 `docs/examples/` — six walkthroughs, all deterministic and executed as
-regression tests (see README.md table for the function mapping):
+regression tests (see README.md table for the function mapping); each
+follows the Problem / Dataset / Method / Code / Interpretation /
+Limitations research-report template:
 
 1. **Trading expectancy and position sizing** — expectancy, Clopper-
    Pearson CI vs Bayesian posterior, power analysis, Kelly sizing.
@@ -330,6 +396,32 @@ regression tests (see README.md table for the function mapping):
    package is exercised on 3.9+ only).
 5. **Before Phase 2 starts**, the mandate requires the FDR/BH
    correction; the resampling layer (RC, DSR) is the natural host.
+
+---
+
+## 13. Phase 1 freeze checklist
+
+| Item | Status |
+|------|--------|
+| Public API reviewed and frozen at 0.3.0 (6 renames; ADR gate afterwards) | PASS |
+| Naming consistent across modules (`z_score`, `p_value`, `_confidence_interval`) | PASS |
+| Parameter ordering and naming uniform; two-input convention `(a, b)` | PASS |
+| Seeds uniform (`seed=0`, `default_rng`) in all stochastic functions | PASS |
+| NaN policy explicit and correct in every public docstring (74/74 scripted audit) | PASS |
+| Docstring sections complete (Definition/Raises/Complexity/References/Examples) | PASS |
+| Error handling uniform (ValueError domains, TypeError for str, documented NaN/inf returns) | PASS |
+| Examples executable, pinned, deterministic; Problem/Dataset/Method template applied | PASS |
+| Every public function demonstrated in an example (guard test) | PASS |
+| Benchmarks complete at 8M points; measured exponents match documented big-O | PASS |
+| Mathematical references verified against primary sources (AS, Feller, Tsay, Welch, ...) | PASS |
+| Property, reference, input, branch, regression, and doctest suites green | PASS |
+| Full repo suite green (661 passed, 2 skipped — both pre-existing platform skips) | PASS |
+| Line coverage 99.7% (858 stmts, 3 miss — provably unreachable guards) | PASS |
+| Technical debt explicitly documented; none blocking | PASS |
+| Engineering report refreshed with final audit results | PASS |
+
+All items green. Phase 1 is complete and frozen. **Phase 2 will not
+begin without explicit authorization following this report.**
 
 ---
 Prepared for the Phase 1 acceptance review. Phase 2 will not begin

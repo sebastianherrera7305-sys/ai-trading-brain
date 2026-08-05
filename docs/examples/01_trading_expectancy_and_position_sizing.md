@@ -1,6 +1,6 @@
 # Example 01 — Trading Expectancy and Position Sizing
 
-## Research question
+## Problem
 
 A momentum strategy was backtested on 200 trades. It won 112 and lost 88,
 with a payoff ratio of 1.25 (a win pays +1.25 per unit risked, a loss costs
@@ -13,7 +13,23 @@ with a payoff ratio of 1.25 (a win pays +1.25 per unit risked, a loss costs
 
 This walkthrough answers those questions with the probability module.
 
-## Mathematical approach
+Why this matters: expectancy is the *economic* question (does the strategy
+make money?) and the win-rate distribution is the *statistical* question
+(can we trust the estimate?). The Kelly fraction is the answer to "how
+big" — the single most consequential decision in a portfolio, because
+overbetting by 2x turns a profitable strategy into a guaranteed loss.
+These numbers are the first things a principal reviews before allocating
+capital.
+
+## Dataset
+
+The observed trade log: 200 trades with 112 wins and 88 losses (a 0.56
+win rate) and a fixed payoff of +1.25 per unit risked per win against
+-1.0 per loss (payoff ratio 1.25). The log is taken as given rather than
+generated: the questions here are inference and sizing on a fixed record,
+which is exactly the situation a real allocator faces.
+
+## Method
 
 **Expectancy** is the mean P&L per unit risked:
 
@@ -29,15 +45,6 @@ given by the power function of a two-sided z-test.
 **Kelly criterion** maximizes expected log-growth: with win rate `p` and
 net odds `b` (win of b:1, loss of 1), bet the fraction
 `f* = (p(1+b) - 1) / b`.
-
-## Why this matters
-
-Expectancy is the *economic* question (does the strategy make money?) and
-the win-rate distribution is the *statistical* question (can we trust the
-estimate?). The Kelly fraction is the answer to "how big" — the single
-most consequential decision in a portfolio, because overbetting by 2x
-turns a profitable strategy into a guaranteed loss. These numbers are the
-first things a principal reviews before allocating capital.
 
 ## Code
 

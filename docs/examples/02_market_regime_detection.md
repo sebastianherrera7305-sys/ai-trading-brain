@@ -1,6 +1,6 @@
 # Example 02 — Market Regime Detection with Rolling Statistics
 
-## Research question
+## Problem
 
 A systematic desk is deciding between a momentum strategy and a
 mean-reversion strategy for a liquid index. Both only work in the right
@@ -8,7 +8,24 @@ regime. Can we detect, from the price series alone, whether the market is
 currently trending, mean-reverting, or a random walk — and build a simple
 rolling "regime score" from the library's primitives?
 
-## Mathematical approach
+Why this matters: regime misclassification is the standard cause of
+strategy death — a momentum book running mean-reverting markets, a
+mean-reversion book running trends. A cheap, explainable regime check
+runs *before* capital is committed and *continuously* afterwards, and it
+is the input to risk limits (cut exposure in "random-walk, high-vol"
+states).
+
+## Dataset
+
+Three synthetic daily return series, 5,000 observations each, generated
+from AR(1) processes with 1% daily volatility: a driftless random walk
+(seed 31), a trending regime (phi = +0.25 with a small drift, seed 3) and
+a mean-reverting regime (phi = -0.25, seed 4). Price series are built
+from the returns with prices_from_returns. The regimes are synthetic so
+the true labels are known by construction and each detector's answer can
+be checked against ground truth.
+
+## Method
 
 Three complementary tools, all computed on the return series `r_t`:
 
@@ -33,14 +50,6 @@ Three complementary tools, all computed on the return series `r_t`:
 `autocorrelation` and `autocorrelation_series` quantify the serial
 dependence directly; `lagged_features` builds the feature matrix a regime
 model would consume.
-
-## Why this matters
-
-Regime misclassification is the standard cause of strategy death: a
-momentum book runs mean-reverting markets, a mean-reversion book runs
-trends. A cheap, explainable regime check runs *before* capital is
-committed and *continuously* afterwards, and it is the input to
-risk-limits (cut exposure in "random-walk, high-vol" states).
 
 ## Code
 

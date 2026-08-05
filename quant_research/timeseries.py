@@ -29,7 +29,7 @@ __all__ = [
     "autocorrelation_series",
     "hurst_exponent",
     "variance_ratio",
-    "variance_ratio_zstat",
+    "variance_ratio_z_score",
     "lagged_features",
 ]
 
@@ -210,7 +210,7 @@ def variance_ratio(returns: np.ndarray, q: int) -> float:
     return var_q / (q * var_1)
 
 
-def variance_ratio_zstat(returns: np.ndarray, q: int) -> float:
+def variance_ratio_z_score(returns: np.ndarray, q: int) -> float:
     """Homoskedastic z-statistic of the variance ratio.
 
     Definition
@@ -231,7 +231,7 @@ def variance_ratio_zstat(returns: np.ndarray, q: int) -> float:
     Examples
         >>> import numpy as np
         >>> rng = np.random.default_rng(9)
-        >>> z = variance_ratio_zstat(rng.normal(0.0, 1.0, 2000), 4)
+        >>> z = variance_ratio_z_score(rng.normal(0.0, 1.0, 2000), 4)
         >>> abs(z) < 2.5
         True
     """

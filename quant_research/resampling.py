@@ -21,10 +21,10 @@ from .statistics import normal_cdf, normal_inv_cdf
 __all__ = [
     "block_bootstrap",
     "stationary_bootstrap",
-    "bootstrap_ci",
+    "bootstrap_confidence_interval",
     "permutation_test_two_sample",
     "permutation_test_signal",
-    "reality_check_pvalue",
+    "reality_check_p_value",
     "deflated_sharpe_ratio",
 ]
 
@@ -168,7 +168,7 @@ def stationary_bootstrap(
     return out
 
 
-def bootstrap_ci(
+def bootstrap_confidence_interval(
     data: np.ndarray,
     block_size: int = 5,
     n_bootstrap: int = 1000,
@@ -199,12 +199,12 @@ def bootstrap_ci(
         >>> import numpy as np
         >>> rng = np.random.default_rng(7)
         >>> x = rng.normal(0.0, 1.0, 100)
-        >>> est, lo, hi = bootstrap_ci(x, block_size=5, n_bootstrap=500, seed=1)
+        >>> est, lo, hi = bootstrap_confidence_interval(x, block_size=5, n_bootstrap=500, seed=1)
         >>> lo <= est <= hi
         True
     """
     data = finite_only(data, "data")
-    check_min(data, 2, "bootstrap_ci")
+    check_min(data, 2, "bootstrap_confidence_interval")
     est = float(statistic(data))
     dist = block_bootstrap(data, block_size, n_bootstrap, seed, statistic)
     tail = (1.0 - confidence) / 2.0
@@ -337,7 +337,7 @@ def permutation_test_signal(
 # (docs/research/05 section 2.4)
 # ---------------------------------------------------------------------------
 
-def reality_check_pvalue(
+def reality_check_p_value(
     trial_performances: np.ndarray,
     block_size: int = 5,
     n_bootstrap: int = 2000,
@@ -380,7 +380,7 @@ def reality_check_pvalue(
         >>> import numpy as np
         >>> rng = np.random.default_rng(11)
         >>> trials = rng.normal(0.0, 1.0, (20, 100))
-        >>> p = reality_check_pvalue(trials, block_size=5,
+        >>> p = reality_check_p_value(trials, block_size=5,
         ...                          n_bootstrap=500, seed=2)
         >>> p > 0.05
         True
@@ -395,7 +395,7 @@ def reality_check_pvalue(
     n_trials, n_obs = m.shape
     if block_size <= 0 or block_size > n_obs:
         raise ValueError("block_size must be in [1, n_obs]")
-    check_min(np.ones(n_trials), 2, "reality_check_pvalue")
+    check_min(np.ones(n_trials), 2, "reality_check_p_value")
     if n_bootstrap < 1:
         raise ValueError("n_bootstrap must be >= 1")
 

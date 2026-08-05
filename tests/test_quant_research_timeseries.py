@@ -87,10 +87,10 @@ def test_variance_ratio_mean_reverting_below_one():
     assert ts.variance_ratio(returns, q=2) < 0.95
 
 
-def test_variance_ratio_zstat_random_walk():
+def test_variance_ratio_z_score_random_walk():
     rng = np.random.default_rng(0)
     returns = rng.normal(0.0, 1.0, 5000)
-    assert abs(ts.variance_ratio_zstat(returns, q=2)) < 2.0
+    assert abs(ts.variance_ratio_z_score(returns, q=2)) < 2.0
 
 
 def test_lagged_features_layout():

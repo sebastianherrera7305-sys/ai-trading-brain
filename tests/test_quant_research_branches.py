@@ -114,11 +114,11 @@ def test_sprt_expected_sample_size_branches():
     ) == float("inf")
 
 
-def test_normal_power_simple_validation_branches():
+def test_normal_power_validation_branches():
     with pytest.raises(ValueError):
-        probability.normal_power_simple(0.2, 0.0, 100)
+        probability.normal_power(0.2, 0.0, 100)
     with pytest.raises(ValueError):
-        probability.normal_power_simple(0.2, 1.0, 0)
+        probability.normal_power(0.2, 1.0, 0)
 
 
 # ---------------------------------------------------------------------------
@@ -172,7 +172,7 @@ def test_autocorrelation_returns_nan_when_lag_too_large():
 def test_variance_ratio_zero_variance_returns_nan():
     vr = timeseries.variance_ratio(np.full(30, 2.0), 4)
     assert vr != vr
-    z = timeseries.variance_ratio_zstat(np.full(30, 2.0), 4)
+    z = timeseries.variance_ratio_z_score(np.full(30, 2.0), 4)
     assert z != z
 
 
@@ -258,26 +258,26 @@ def test_resampling_n_bootstrap_validation():
 
 def test_reality_check_validation_branches():
     with pytest.raises(ValueError):
-        resampling.reality_check_pvalue(np.array([1.0, 2.0, 3.0]))
+        resampling.reality_check_p_value(np.array([1.0, 2.0, 3.0]))
     with pytest.raises(ValueError):
-        resampling.reality_check_pvalue(np.full((3, 10), np.nan))
+        resampling.reality_check_p_value(np.full((3, 10), np.nan))
     with pytest.raises(ValueError):
-        resampling.reality_check_pvalue(np.ones((3, 10)), block_size=0)
+        resampling.reality_check_p_value(np.ones((3, 10)), block_size=0)
     with pytest.raises(ValueError):
-        resampling.reality_check_pvalue(np.ones((1, 10)))
+        resampling.reality_check_p_value(np.ones((1, 10)))
 
 
 def test_reality_check_single_trial_row_rejected():
     trials = np.arange(1.0, 21.0).reshape(2, 10)
     with pytest.raises(ValueError):
-        resampling.reality_check_pvalue(trials[:1])
+        resampling.reality_check_p_value(trials[:1])
 
 
 def test_reality_check_drops_partial_nan_rows():
     rng = np.random.default_rng(0)
     trials = rng.normal(0.0, 1.0, (5, 50))
     trials[2, 3] = np.nan
-    p = resampling.reality_check_pvalue(trials, n_bootstrap=100, seed=0)
+    p = resampling.reality_check_p_value(trials, n_bootstrap=100, seed=0)
     assert 0.0 <= p <= 1.0
 
 
@@ -322,9 +322,9 @@ def test_centered_smooth_window_larger_than_input():
     assert np.all(np.isnan(out))
 
 
-def test_zscore_missing_positions_are_nan_and_lengths_match():
+def test_z_score_missing_positions_are_nan_and_lengths_match():
     x = np.array([np.nan, 2.0, np.nan, 4.0])
-    z = core.zscore(x)
+    z = core.z_score(x)
     assert z.shape == (4,)
     assert np.isnan(z[0]) and np.isnan(z[2]) and not np.isnan(z[1])
 
@@ -388,7 +388,7 @@ def test_permutation_test_signal_length_mismatch():
 def test_reality_check_n_bootstrap_validation():
     trials = np.ones((3, 10))
     with pytest.raises(ValueError):
-        resampling.reality_check_pvalue(trials, n_bootstrap=0)
+        resampling.reality_check_p_value(trials, n_bootstrap=0)
 
 
 def test_deflated_sharpe_positive_radicand_with_skewness():

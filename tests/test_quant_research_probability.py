@@ -128,8 +128,8 @@ def test_sprt_expected_sample_size():
     assert e == pytest.approx(131.65, abs=0.5)
 
 
-def test_normal_power_simple():
-    power = pr.normal_power_simple(effect=0.2, sigma=1.0, n=100, alpha=0.05)
+def test_normal_power():
+    power = pr.normal_power(effect=0.2, sigma=1.0, n=100, alpha=0.05)
     assert power == pytest.approx(0.51595, abs=1e-3)
-    big = pr.normal_power_simple(effect=0.5, sigma=1.0, n=100, alpha=0.05)
+    big = pr.normal_power(effect=0.5, sigma=1.0, n=100, alpha=0.05)
     assert big > 0.99

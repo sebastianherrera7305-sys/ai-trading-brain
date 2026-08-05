@@ -60,8 +60,10 @@ def _scaling(name, fn, sizes, repeat=3, expected=None):
 
 def main():
     # Vectorized sections need sizes beyond cache residency for the
-    # measured exponent to reflect true asymptotic scaling.
-    sizes = [2_000, 16_000, 128_000, 1_000_000]
+    # measured exponent to reflect true asymptotic scaling. The largest
+    # size (8M floats = 64 MB) is clearly outside L3 on typical Macs,
+    # which pulls the measured exponent of fast kernels back to linear.
+    sizes = [2_000, 16_000, 128_000, 1_000_000, 8_000_000]
     rng = np.random.default_rng(0)
 
     print("=== core: documented O(n) ===")

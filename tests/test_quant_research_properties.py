@@ -100,10 +100,10 @@ def test_kurtosis_invariant_to_translation_and_scaling():
         assert statistics.excess_kurtosis(3.0 * x) == pytest.approx(k, abs=1e-9)
 
 
-def test_zscore_has_zero_mean_unit_std():
+def test_z_score_has_zero_mean_unit_std():
     for seed in SEEDS:
         x = _noisy(seed=seed)
-        z = core.zscore(x)
+        z = core.z_score(x)
         assert float(np.mean(z)) == pytest.approx(0.0, abs=1e-12)
         assert float(np.std(z, ddof=1)) == pytest.approx(1.0, abs=1e-12)
 
@@ -340,10 +340,10 @@ def test_ewma_of_constant_is_constant():
         np.testing.assert_allclose(core.ewma(np.full(20, 5.0), span), np.full(20, 5.0))
 
 
-def test_rolling_zscore_mean_of_valid_part_near_zero():
+def test_rolling_z_score_mean_of_valid_part_near_zero():
     rng = np.random.default_rng(4)
     x = rng.normal(0.0, 1.0, 500)
-    z = core.rolling_zscore(x, 50)
+    z = core.rolling_z_score(x, 50)
     assert abs(float(np.nanmean(z))) < 0.1
     assert abs(float(np.nanstd(z, ddof=1)) - 1.0) < 0.2
 
@@ -373,7 +373,7 @@ def test_bootstrap_means_centered_on_sample_mean():
 
 def test_bootstrap_ci_contains_estimate():
     x = _noisy(n=200, seed=11)
-    est, lo, hi = resampling.bootstrap_ci(x, block_size=5, n_bootstrap=1000, seed=1)
+    est, lo, hi = resampling.bootstrap_confidence_interval(x, block_size=5, n_bootstrap=1000, seed=1)
     assert lo <= est <= hi
 
 
@@ -392,10 +392,10 @@ def test_bootstrap_ci_reflects_serial_dependence():
     # dependence and OVERSTATES confidence (narrow CI); block
     # resampling must produce an honestly wider interval.
     x = _ar1()
-    _, lo1, hi1 = resampling.bootstrap_ci(
+    _, lo1, hi1 = resampling.bootstrap_confidence_interval(
         x, block_size=1, n_bootstrap=1000, seed=1
     )
-    _, lo40, hi40 = resampling.bootstrap_ci(
+    _, lo40, hi40 = resampling.bootstrap_confidence_interval(
         x, block_size=40, n_bootstrap=1000, seed=1
     )
     assert (hi40 - lo40) > (hi1 - lo1)
@@ -404,7 +404,7 @@ def test_bootstrap_ci_reflects_serial_dependence():
 def test_reality_check_no_edge_has_large_pvalue():
     rng = np.random.default_rng(11)
     trials = rng.normal(0.0, 1.0, (20, 100))
-    p = resampling.reality_check_pvalue(trials, block_size=5, n_bootstrap=1000, seed=2)
+    p = resampling.reality_check_p_value(trials, block_size=5, n_bootstrap=1000, seed=2)
     assert p > 0.05
 
 
@@ -412,7 +412,7 @@ def test_reality_check_one_lucky_trial_still_honest():
     rng = np.random.default_rng(12)
     trials = rng.normal(0.0, 1.0, (20, 100))
     trials[0, :] += 0.5
-    p = resampling.reality_check_pvalue(trials, block_size=5, n_bootstrap=2000, seed=2)
+    p = resampling.reality_check_p_value(trials, block_size=5, n_bootstrap=2000, seed=2)
     assert p < 0.2
 
 

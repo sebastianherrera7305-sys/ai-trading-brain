@@ -32,7 +32,7 @@ __all__ = [
     "brier_skill_score",
     "sprt_bernoulli",
     "sprt_expected_sample_size",
-    "normal_power_simple",
+    "normal_power",
 ]
 
 
@@ -588,7 +588,7 @@ def sprt_expected_sample_size(
     return ((1.0 - alpha) * b + alpha * a) / z
 
 
-def normal_power_simple(
+def normal_power(
     effect: float, sigma: float, n: int, alpha: float = 0.05
 ) -> float:
     """Power of a one-sample z-test for a mean of `effect` vs 0.
@@ -606,7 +606,7 @@ def normal_power_simple(
         O(1).
 
     Examples
-        >>> round(normal_power_simple(0.2, 1.0, 100), 4)
+        >>> round(normal_power(0.2, 1.0, 100), 4)
         0.516
     """
     if sigma <= 0:

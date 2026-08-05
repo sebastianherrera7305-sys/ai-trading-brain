@@ -27,11 +27,11 @@ __all__ = [
     "cumulative_returns",
     "prices_from_returns",
     "drawdown_prices",
-    "zscore",
+    "z_score",
     "rolling_mean",
     "rolling_std",
     "rolling_sum",
-    "rolling_zscore",
+    "rolling_z_score",
     "rolling_correlation",
     "ewma",
     "ewma_volatility",
@@ -174,7 +174,7 @@ def drawdown_prices(prices: np.ndarray) -> np.ndarray:
     return prices / running_max - 1.0
 
 
-def zscore(x: np.ndarray, ddof: int = 1) -> np.ndarray:
+def z_score(x: np.ndarray, ddof: int = 1) -> np.ndarray:
     """Standardize a series: (x - mean) / std, position-aligned.
 
     Definition
@@ -192,14 +192,14 @@ def zscore(x: np.ndarray, ddof: int = 1) -> np.ndarray:
     Examples
         >>> import numpy as np
         >>> np.testing.assert_allclose(
-        ...     zscore(np.array([1.0, 2.0, 3.0])), [-1.0, 0.0, 1.0],
+        ...     z_score(np.array([1.0, 2.0, 3.0])), [-1.0, 0.0, 1.0],
         ... )
-        >>> z = zscore(np.array([2.0, 2.0, 2.0]))
+        >>> z = z_score(np.array([2.0, 2.0, 2.0]))
         >>> bool(np.all(np.isnan(z)))
         True
     """
     x = as_float_array(x, "x")
-    check_min(x, 2, "zscore")
+    check_min(x, 2, "z_score")
     finite = x[np.isfinite(x)]
     mean = float(np.mean(finite))
     std = float(np.std(finite, ddof=ddof))
@@ -306,7 +306,7 @@ def rolling_sum(x: np.ndarray, window: int) -> np.ndarray:
     return out
 
 
-def rolling_zscore(x: np.ndarray, window: int, ddof: int = 1) -> np.ndarray:
+def rolling_z_score(x: np.ndarray, window: int, ddof: int = 1) -> np.ndarray:
     """Z-score of x against its own trailing window.
 
     Definition
@@ -322,7 +322,7 @@ def rolling_zscore(x: np.ndarray, window: int, ddof: int = 1) -> np.ndarray:
 
     Examples
         >>> import numpy as np
-        >>> out = rolling_zscore(np.array([1.0, 2.0, 3.0, 4.0]), 2)
+        >>> out = rolling_z_score(np.array([1.0, 2.0, 3.0, 4.0]), 2)
         >>> int(np.isnan(out[0]))
         1
         >>> np.testing.assert_allclose(out[1:], [0.5 ** 0.5] * 3, rtol=1e-12)

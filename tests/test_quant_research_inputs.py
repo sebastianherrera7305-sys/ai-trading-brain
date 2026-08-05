@@ -47,7 +47,7 @@ def test_int_input_behaves_like_float():
     [
         (core.simple_returns, (5.0,)),
         (core.cumulative_returns, (5.0,)),
-        (core.zscore, (5.0,)),
+        (core.z_score, (5.0,)),
         (core.ewma, (5.0, 3)),
         (core.safe_divide, (1.0, 2.0)),
         (statistics.variance, (5.0,)),
@@ -93,7 +93,7 @@ def test_covariance_matrix_accepts_2d_and_1d():
         (core.rolling_mean, (np.array([]), 3)),
         (core.rolling_std, (np.array([]), 3)),
         (core.rolling_sum, (np.array([]), 3)),
-        (core.rolling_zscore, (np.array([]), 3)),
+        (core.rolling_z_score, (np.array([]), 3)),
         (core.ewma, (np.array([]), 3)),
         (core.ewma_volatility, (np.array([]), 3)),
         (core.centered_smooth, (np.array([]), 3)),
@@ -120,7 +120,7 @@ def test_lagged_features_empty_input():
 @pytest.mark.parametrize(
     "func,args",
     [
-        (core.zscore, (np.array([]),)),
+        (core.z_score, (np.array([]),)),
         (statistics.variance, (np.array([]),)),
         (statistics.covariance, (np.array([]), np.array([]))),
         (statistics.coefficient_of_variation, (np.array([]),)),
@@ -137,7 +137,7 @@ def test_lagged_features_empty_input():
         (probability.brier_skill_score, (np.array([]), np.array([]))),
         (resampling.block_bootstrap, (np.array([]), 3)),
         (resampling.stationary_bootstrap, (np.array([]), 3.0)),
-        (resampling.bootstrap_ci, (np.array([]),)),
+        (resampling.bootstrap_confidence_interval, (np.array([]),)),
         (resampling.permutation_test_two_sample, (np.array([]), np.array([1.0, 2.0]))),
         (timeseries.autocorrelation, (np.array([]),)),
         (timeseries.hurst_exponent, (np.array([]),)),
@@ -193,9 +193,9 @@ def test_statistics_all_nan_raise():
         statistics.variance(np.array([np.nan, np.nan, np.nan]))
 
 
-def test_zscore_position_aligned_nan():
+def test_z_score_position_aligned_nan():
     x = np.array([1.0, np.nan, 3.0])
-    z = core.zscore(x)
+    z = core.z_score(x)
     assert np.isnan(z[1])
     np.testing.assert_allclose(z[[0, 2]], [-1.0 / math.sqrt(2.0), 1.0 / math.sqrt(2.0)])
 

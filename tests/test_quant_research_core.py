@@ -41,12 +41,12 @@ def test_drawdown_prices():
     np.testing.assert_allclose(dd, [0.0, 0.0, -0.25])
 
 
-def test_zscore():
-    np.testing.assert_allclose(core.zscore(np.array([1.0, 2.0, 3.0])), [-1.0, 0.0, 1.0])
+def test_z_score():
+    np.testing.assert_allclose(core.z_score(np.array([1.0, 2.0, 3.0])), [-1.0, 0.0, 1.0])
 
 
-def test_zscore_constant_input_is_nan():
-    assert np.all(np.isnan(core.zscore(np.array([2.0, 2.0, 2.0]))))
+def test_z_score_constant_input_is_nan():
+    assert np.all(np.isnan(core.z_score(np.array([2.0, 2.0, 2.0]))))
 
 
 def test_rolling_mean():
@@ -77,14 +77,14 @@ def test_rolling_sum():
     np.testing.assert_allclose(out[1:], [3.0, 5.0, 7.0])
 
 
-def test_rolling_zscore():
-    out = core.rolling_zscore(np.array([1.0, 2.0, 3.0, 4.0]), 2)
+def test_rolling_z_score():
+    out = core.rolling_z_score(np.array([1.0, 2.0, 3.0, 4.0]), 2)
     assert np.isnan(out[0])
     np.testing.assert_allclose(out[1:], [math.sqrt(0.5)] * 3)
 
 
-def test_rolling_zscore_zero_variance_window_is_nan():
-    out = core.rolling_zscore(np.array([1.0, 1.0, 2.0, 3.0]), 2)
+def test_rolling_z_score_zero_variance_window_is_nan():
+    out = core.rolling_z_score(np.array([1.0, 1.0, 2.0, 3.0]), 2)
     assert np.isnan(out[1])
     assert not np.isnan(out[2])
 

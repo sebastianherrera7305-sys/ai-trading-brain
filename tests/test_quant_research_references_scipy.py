@@ -248,6 +248,6 @@ def test_normal_power_matches_scipy_derivation():
         ref = 1.0 - scipy_stats.norm.cdf(
             scipy_stats.norm.ppf(0.975) - effect / se
         )
-        assert probability.normal_power_simple(effect, sigma, n) == pytest.approx(
+        assert probability.normal_power(effect, sigma, n) == pytest.approx(
             float(ref), abs=1e-9
         )

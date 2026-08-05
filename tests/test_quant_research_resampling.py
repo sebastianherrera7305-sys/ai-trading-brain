@@ -25,14 +25,14 @@ def test_block_bootstrap_mean_unbiased():
 def test_bootstrap_ci_contains_estimate():
     rng = np.random.default_rng(0)
     data = rng.normal(0.1, 1.0, 1000)
-    est, lo, hi = rs.bootstrap_ci(data, block_size=10, n_bootstrap=500, seed=3)
+    est, lo, hi = rs.bootstrap_confidence_interval(data, block_size=10, n_bootstrap=500, seed=3)
     assert est == pytest.approx(float(np.mean(data)))
     assert lo < est < hi
 
 
 def test_bootstrap_ci_tight_for_low_variance():
     data = np.linspace(5.0, 5.001, 200)
-    est, lo, hi = rs.bootstrap_ci(data, block_size=10, n_bootstrap=300, seed=3)
+    est, lo, hi = rs.bootstrap_confidence_interval(data, block_size=10, n_bootstrap=300, seed=3)
     assert hi - lo < 0.005
 
 
@@ -76,19 +76,19 @@ def test_permutation_signal_no_edge_not_significant():
 
 def test_reality_check_one_great_trial():
     trials = np.vstack([np.ones(100), np.zeros(100)])
-    p = rs.reality_check_pvalue(trials, block_size=5, n_bootstrap=2000, seed=0)
+    p = rs.reality_check_p_value(trials, block_size=5, n_bootstrap=2000, seed=0)
     assert p == pytest.approx(1.0 / 2001.0)
 
 
 def test_reality_check_null_is_one():
     trials = np.zeros((3, 100))
-    p = rs.reality_check_pvalue(trials, block_size=5, n_bootstrap=500, seed=0)
+    p = rs.reality_check_p_value(trials, block_size=5, n_bootstrap=500, seed=0)
     assert p == pytest.approx(1.0)
 
 
 def test_reality_check_requires_2d():
     with pytest.raises(ValueError):
-        rs.reality_check_pvalue(np.ones(50))
+        rs.reality_check_p_value(np.ones(50))
 
 
 def test_deflated_sharpe_no_trial_variance():

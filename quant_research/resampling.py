@@ -6,17 +6,27 @@ answers to "would random data do at least this well?" that make no
 parametric assumptions about trade returns.
 
 Determinism policy: every function takes a seed and uses numpy's
-default_rng. Tests pin exact results for fixed seeds.
+default_rng(seed). Tests pin exact results for fixed seeds.
 """
 
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 
 import math
 
 import numpy as np
 
-from .core import required_length
+from ._input import as_float_array, check_min, finite_only
 from .statistics import normal_cdf, normal_inv_cdf
+
+__all__ = [
+    "block_bootstrap",
+    "stationary_bootstrap",
+    "bootstrap_ci",
+    "permutation_test_two_sample",
+    "permutation_test_signal",
+    "reality_check_pvalue",
+    "deflated_sharpe_ratio",
+]
 
 
 def _mean_diff(a: np.ndarray, b: np.ndarray) -> float:
@@ -34,13 +44,6 @@ def _mean_of_selected(returns: np.ndarray, signals: np.ndarray) -> float:
 # Bootstrap
 # ---------------------------------------------------------------------------
 
-def _blocks(n: int, block_size: int, rng: np.random.Generator, n_draws: int) -> np.ndarray:
-    """n_draws starting indices for (possibly overlapping) blocks of
-    length block_size."""
-    max_start = n - block_size + 1
-    return rng.integers(0, max_start, size=n_draws)
-
-
 def block_bootstrap(
     data: np.ndarray,
     block_size: int,
@@ -48,21 +51,48 @@ def block_bootstrap(
     seed: int = 0,
     statistic: Callable[[np.ndarray], float] = np.mean,
 ) -> np.ndarray:
-    """Moving-block bootstrap (Kunsch): resample contiguous blocks of
-    length block_size with replacement and concatenate until each
-    bootstrap sample matches the original length (last partial block
-    truncated). Returns the n_bootstrap statistic values.
+    """Moving-block bootstrap (Kunsch) of a statistic.
 
-    Blocking preserves short-horizon serial dependence in returns —
-    plain resampling of individual trades would destroy autocorrelation
-    and overstate confidence (the classic bootstrap failure mode for
-    strategies that trade the same regime repeatedly)."""
-    data = np.asarray(data, dtype=float)
-    data = data[np.isfinite(data)]
+    Definition
+        Resample contiguous blocks of length block_size with
+        replacement and concatenate until each bootstrap sample matches
+        the original length (last partial block truncated); recompute
+        `statistic` per sample. Returns the n_bootstrap values.
+
+        Blocking preserves short-horizon serial dependence in returns —
+        plain resampling of individual trades would destroy
+        autocorrelation and overstate confidence (the classic bootstrap
+        failure mode for strategies that trade the same regime
+        repeatedly).
+
+    Raises
+        ValueError if fewer than 2 finite observations, or block_size
+        outside [1, n].
+
+    Complexity
+        O(n_bootstrap * n) time; O(n) memory.
+
+    References
+        H. Künsch (1989), "The jackknife and the bootstrap for general
+        stationary observations", Annals of Statistics 17.
+
+    Examples
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(7)
+        >>> x = rng.normal(0.0, 1.0, 50)
+        >>> out = block_bootstrap(x, 5, n_bootstrap=200, seed=3)
+        >>> out.shape
+        (200,)
+        >>> abs(float(np.mean(out)) - float(np.mean(x))) < 0.5
+        True
+    """
+    data = finite_only(data, "data")
     n = len(data)
-    required_length("block_bootstrap", data, 2)
+    check_min(data, 2, "block_bootstrap")
     if block_size <= 0 or block_size > n:
         raise ValueError("block_size must be in [1, len(data)]")
+    if n_bootstrap < 1:
+        raise ValueError("n_bootstrap must be >= 1")
     rng = np.random.default_rng(seed)
     out = np.empty(n_bootstrap)
     for i in range(n_bootstrap):
@@ -84,16 +114,40 @@ def stationary_bootstrap(
     seed: int = 0,
     statistic: Callable[[np.ndarray], float] = np.mean,
 ) -> np.ndarray:
-    """Stationary bootstrap (Politis & Romano): block lengths are
-    geometric with mean mean_block_length, so each bootstrap series is
-    weakly stationary. Preferred over fixed-block when dependence is at
-    unknown scales."""
-    data = np.asarray(data, dtype=float)
-    data = data[np.isfinite(data)]
+    """Stationary bootstrap (Politis & Romano) of a statistic.
+
+    Definition
+        Block lengths are drawn geometric with mean mean_block_length
+        and the series wraps around, so each bootstrap series is weakly
+        stationary. Preferred over fixed-block when dependence exists at
+        unknown scales.
+
+    Raises
+        ValueError if fewer than 2 finite observations, or
+        mean_block_length <= 0.
+
+    Complexity
+        O(n_bootstrap * n) time; O(n) memory.
+
+    References
+        D. Politis & J. Romano (1994), "The stationary bootstrap",
+        Journal of the American Statistical Association 89.
+
+    Examples
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(7)
+        >>> x = rng.normal(0.0, 1.0, 50)
+        >>> out = stationary_bootstrap(x, 4.0, n_bootstrap=200, seed=3)
+        >>> out.shape
+        (200,)
+    """
+    data = finite_only(data, "data")
     n = len(data)
-    required_length("stationary_bootstrap", data, 2)
+    check_min(data, 2, "stationary_bootstrap")
     if mean_block_length <= 0:
         raise ValueError("mean_block_length must be > 0")
+    if n_bootstrap < 1:
+        raise ValueError("n_bootstrap must be >= 1")
     p = 1.0 / mean_block_length
     rng = np.random.default_rng(seed)
     out = np.empty(n_bootstrap)
@@ -121,14 +175,44 @@ def bootstrap_ci(
     confidence: float = 0.95,
     seed: int = 0,
     statistic: Callable[[np.ndarray], float] = np.mean,
-) -> tuple:
-    """Percentile bootstrap confidence interval (block bootstrap) for
-    `statistic(data)`. Returns (estimate, lower, upper)."""
-    data = np.asarray(data, dtype=float)
-    est = statistic(data[np.isfinite(data)])
+) -> Tuple[float, float, float]:
+    """Percentile block-bootstrap confidence interval for a statistic.
+
+    Definition
+        (estimate, lower, upper) where estimate = statistic(data) on
+        the finite observations and the bounds are the percentile
+        points of the block-bootstrap distribution (Efron's percentile
+        interval). No parametric distributional assumption is made.
+
+    Raises
+        ValueError propagated from block_bootstrap (>= 2 finite
+        observations, block_size in [1, n]).
+
+    Complexity
+        O(n_bootstrap * n) time; O(n) memory.
+
+    References
+        B. Efron (1981), "Nonparametric standard errors and confidence
+        intervals", Canadian Journal of Statistics 9.
+
+    Examples
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(7)
+        >>> x = rng.normal(0.0, 1.0, 100)
+        >>> est, lo, hi = bootstrap_ci(x, block_size=5, n_bootstrap=500, seed=1)
+        >>> lo <= est <= hi
+        True
+    """
+    data = finite_only(data, "data")
+    check_min(data, 2, "bootstrap_ci")
+    est = float(statistic(data))
     dist = block_bootstrap(data, block_size, n_bootstrap, seed, statistic)
     tail = (1.0 - confidence) / 2.0
-    return est, float(np.percentile(dist, 100 * tail)), float(np.percentile(dist, 100 * (1.0 - tail)))
+    return (
+        est,
+        float(np.percentile(dist, 100 * tail)),
+        float(np.percentile(dist, 100 * (1.0 - tail))),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -142,16 +226,40 @@ def permutation_test_two_sample(
     seed: int = 0,
     statistic: Callable[[np.ndarray, np.ndarray], float] = _mean_diff,
 ) -> float:
-    """Two-sample permutation test of "no difference": pool a and b,
-    shuffle group labels, recompute the statistic. Returns the two-sided
-    p-value (fraction of permutations at least as extreme as observed,
-    using the +1/+1 Monte-Carlo convention)."""
-    a = np.asarray(a, dtype=float)
-    b = np.asarray(b, dtype=float)
-    a = a[np.isfinite(a)]
-    b = b[np.isfinite(b)]
-    required_length("permutation_test_two_sample", a, 2)
-    required_length("permutation_test_two_sample", b, 2)
+    """Two-sample permutation test of "no difference".
+
+    Definition
+        Pool a and b, shuffle the group labels, recompute the
+        statistic, and count how often the permuted statistic is at
+        least as extreme as the observed one. Returns the two-sided
+        p-value with the +1/+1 Monte-Carlo convention (an exact 0 is
+        impossible and under-reports significance).
+
+    Raises
+        ValueError if either sample has fewer than 2 finite
+        observations.
+
+    Complexity
+        O(n_permutations * (n_a + n_b)) time; O(n) memory.
+
+    References
+        E. Pitman (1937), "Significance tests which may be applied to
+        samples from any populations", JRSS B 4.
+
+    Examples
+        >>> import numpy as np
+        >>> p = permutation_test_two_sample(np.arange(1.0, 6.0),
+        ...                                 np.arange(11.0, 16.0),
+        ...                                 n_permutations=2000, seed=0)
+        >>> p < 0.05
+        True
+    """
+    a = finite_only(a, "a")
+    b = finite_only(b, "b")
+    check_min(a, 2, "permutation_test_two_sample")
+    check_min(b, 2, "permutation_test_two_sample")
+    if n_permutations < 1:
+        raise ValueError("n_permutations must be >= 1")
     pooled = np.concatenate([a, b])
     na = len(a)
     rng = np.random.default_rng(seed)
@@ -172,16 +280,43 @@ def permutation_test_signal(
     seed: int = 0,
     statistic: Callable[[np.ndarray, np.ndarray], float] = _mean_of_selected,
 ) -> float:
-    """Permutation test of "signal has no edge": observed performance of
-    the selected trades (returns where signal == 1) vs the null where
-    signal assignments are shuffled across returns. Returns the one-sided
-    p-value: fraction of permutations whose selected-performance >= the
-    observed one. This is the nullity gate required for every backtest
-    result in docs/research/05 section 2.3."""
-    returns = np.asarray(returns, dtype=float)
-    signals = np.asarray(signals, dtype=float)
+    """Permutation test of "signal has no edge".
+
+    Definition
+        Observed performance of the selected trades (returns where
+        signal == 1) vs the null where signal assignments are shuffled
+        across returns. Returns the one-sided p-value: fraction of
+        permutations whose selected-performance is >= the observed one
+        (+1/+1 convention). This is the nullity gate required for every
+        backtest result in docs/research/05 section 2.3.
+
+    Raises
+        ValueError if returns and signals differ in length, or signals
+        contain no 1.
+
+    Complexity
+        O(n_permutations * n) time; O(n) memory.
+
+    References
+        E. Pitman (1937), "Significance tests which may be applied to
+        samples from any populations", JRSS B 4.
+
+    Examples
+        >>> import numpy as np
+        >>> p = permutation_test_signal(np.array([0.1, -0.05, 0.2, -0.02, 0.3,
+        ...                                       0.01, -0.1, 0.05]),
+        ...                             np.array([1.0, 0.0, 1.0, 0.0, 1.0,
+        ...                                       0.0, 1.0, 1.0]),
+        ...                             n_permutations=2000, seed=0)
+        >>> p < 0.2
+        True
+    """
+    returns = as_float_array(returns, "returns")
+    signals = as_float_array(signals, "signals")
     if len(returns) != len(signals):
         raise ValueError("returns and signals must have equal length")
+    if n_permutations < 1:
+        raise ValueError("n_permutations must be >= 1")
     valid = np.isfinite(returns)
     r = returns[valid]
     s = signals[valid]
@@ -210,22 +345,45 @@ def reality_check_pvalue(
 ) -> float:
     """White's Reality Check (1997), block-bootstrap implementation.
 
-    trial_performances: (n_trials, n_obs) matrix of per-observation
-    performance of every candidate strategy tried (each row = one
-    parameter set / rule). The statistic is the best (max) mean across
-    trials — the classic "we tried 500 variants, the best one looks
-    great" situation.
+    Definition
+        trial_performances: (n_trials, n_obs) matrix of per-observation
+        performance of every candidate strategy tried (each row = one
+        parameter set / rule). The statistic is the best (max) mean
+        across trials — the classic "we tried 500 variants, the best
+        one looks great" situation.
 
-    Procedure: recenter every row by its own mean (so the null is "no
-    strategy has edge"), resample observation indices jointly across all
-    rows (preserving cross-trial dependence), recompute the max of the
-    trial means, and return the fraction of bootstrap maxima >= the
-    observed max mean. A small p-value means even the best of many
-    trials is unlikely under the null of universal no-edge.
+        Procedure: recenter every row by its own mean (null: "no
+        strategy has edge"), resample observation indices jointly
+        across all rows (preserving cross-trial dependence), recompute
+        the max of the trial means, and return the fraction of
+        bootstrap maxima >= the observed max mean (+1/+1). A small
+        p-value means even the best of many trials is unlikely under
+        the null of universal no-edge.
 
-    This is the honest p-value for a tuned strategy's reported backtest
-    — the plain walk-forward p-value ignores that the parameter grid was
-    searched.
+        This is the honest p-value for a tuned strategy's reported
+        backtest — the plain walk-forward p-value ignores that the
+        parameter grid was searched.
+
+    Raises
+        ValueError if the input is not 2-D, has no fully-finite rows,
+        or block_size outside [1, n_obs]. Needs >= 2 trial rows.
+
+    Complexity
+        O(n_bootstrap * n_trials * n_obs) time; O(n_trials * n_obs)
+        memory.
+
+    References
+        H. White (2000), "A Reality Check for Data Snooping",
+        Econometrica 68(5).
+
+    Examples
+        >>> import numpy as np
+        >>> rng = np.random.default_rng(11)
+        >>> trials = rng.normal(0.0, 1.0, (20, 100))
+        >>> p = reality_check_pvalue(trials, block_size=5,
+        ...                          n_bootstrap=500, seed=2)
+        >>> p > 0.05
+        True
     """
     m = np.asarray(trial_performances, dtype=float)
     if m.ndim != 2:
@@ -237,7 +395,9 @@ def reality_check_pvalue(
     n_trials, n_obs = m.shape
     if block_size <= 0 or block_size > n_obs:
         raise ValueError("block_size must be in [1, n_obs]")
-    required_length("reality_check_pvalue", np.ones(n_trials), 2)
+    check_min(np.ones(n_trials), 2, "reality_check_pvalue")
+    if n_bootstrap < 1:
+        raise ValueError("n_bootstrap must be >= 1")
 
     means = m.mean(axis=1)
     observed = float(means.max())
@@ -268,26 +428,46 @@ def deflated_sharpe_ratio(
     """Bailey & López de Prado (2014, "The Deflated Sharpe Ratio")
     data-snooping-adjusted Sharpe significance.
 
-    Inputs (all Sharpe values are NON-annualized, per-observation):
-    - sharpe_best: the best Sharpe observed across the trials
-    - trial_sharpes: the Sharpe of EVERY candidate tried (the whole
-      search distribution, not just the winner)
-    - n_obs: number of observations per trial
-    - skewness/kurtosis of the returns (optional; if omitted the
-      distribution is assumed normal, i.e. the standard error reduces
-      to sqrt(1/n))
+    Definition
+        Inputs (all Sharpe values are NON-annualized, per-observation):
+        sharpe_best: the best Sharpe observed across the trials;
+        trial_sharpes: the Sharpe of EVERY candidate tried (the whole
+        search distribution, not just the winner); n_obs: observations
+        per trial; skewness/kurtosis of the returns (optional; if
+        omitted the distribution is assumed normal, i.e. the standard
+        error reduces to sqrt(1/n)).
 
-    Returns P(DSR > 0): the probability that the true post-selection
-    Sharpe exceeds zero once the number of trials is accounted for.
+        Returns P(DSR > 0): the probability that the true
+        post-selection Sharpe exceeds zero once the number of trials is
+        accounted for.
 
-    Procedure (AFML ch. 14): the null maximum Sharpe is
-    E[max] = sqrt(V[max]) * [(1-gamma)*Z^-1(1-1/N) +
-    gamma*Z^-1(1-1/(N*e))], with V[max] = variance of the trial Sharpes,
-    N = number of trials, gamma = Euler-Mascheroni. The DSR is then a
-    one-sided normal tail probability of the distance between the
-    observed best and E[max], corrected for skew/kurtosis.
+        Procedure (AFML ch. 14): the null maximum Sharpe is
+        E[max] = sqrt(V[max]) * [(1-gamma)*Z^-1(1-1/N) +
+        gamma*Z^-1(1-1/(N*e))], with V[max] = variance of the trial
+        Sharpes, N = number of trials, gamma = Euler-Mascheroni. The
+        DSR is then a one-sided normal tail probability of the distance
+        between the observed best and E[max], corrected for
+        skew/kurtosis.
+
+    Raises
+        ValueError if fewer than 2 finite trial Sharpes, n_obs < 2, or
+        exactly one of skewness/kurtosis is given.
+
+    Complexity
+        O(N) time, O(N) memory.
+
+    References
+        Bailey & López de Prado (2014), "The Deflated Sharpe Ratio:
+        Correcting for Selection Bias, Backtest Overfitting and
+        Non-Normality", Journal of Portfolio Management 40(5).
+
+    Examples
+        >>> import numpy as np
+        >>> trial_sharpes = np.array([0.0, 0.05, 0.1, 0.15, 0.2])
+        >>> round(deflated_sharpe_ratio(0.2, trial_sharpes, 250), 4)
+        0.9524
     """
-    trials = np.asarray(trial_sharpes, dtype=float)
+    trials = as_float_array(trial_sharpes, "trial_sharpes")
     trials = trials[np.isfinite(trials)]
     if len(trials) < 2:
         raise ValueError("trial_sharpes needs >= 2 finite values")
@@ -310,9 +490,11 @@ def deflated_sharpe_ratio(
     if skewness is None:
         denominator = 1.0
     else:
-        denominator = math.sqrt(
-            1.0 - skewness * sharpe_best + (kurtosis - 1.0) / 4.0 * sharpe_best ** 2
+        radicand = (
+            1.0 - skewness * sharpe_best
+            + (kurtosis - 1.0) / 4.0 * sharpe_best ** 2
         )
-        if denominator <= 0.0:
+        if radicand <= 0.0:
             return float("nan")
+        denominator = math.sqrt(radicand)
     return float(normal_cdf(numerator / denominator))

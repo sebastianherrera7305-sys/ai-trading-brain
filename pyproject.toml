@@ -16,10 +16,24 @@ dependencies = [
 
 [project.optional-dependencies]
 ibkr = ["ib_async>=1.0"]
-dev = ["pytest>=7", "httpx>=0.24"]
+dev = [
+    "pytest>=7",
+    "httpx>=0.24",
+    "coverage>=7",
+    "numpy>=1.20",
+    "pandas>=1.3",
+]
+# Optional: install scipy to run the scipy reference-validation suite
+# (tests/test_quant_research_references_scipy.py). The quant_research
+# package itself never imports scipy.
+ref = ["scipy>=1.7"]
 
 [tool.setuptools]
 packages = ["trading_brain", "trading_brain.broker", "trading_brain.storage", "trading_brain.risk_engine", "service", "quant_research"]
 
 [tool.setuptools.package-data]
 "trading_brain.storage" = ["migrations/*.sql"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "quant_research"]
+addopts = "--doctest-modules"

@@ -35,17 +35,20 @@ Design constraints (frozen):
 
 Module map:
 
-- core:        returns/prices algebra, rolling ops, EWMA, z-scores
-- statistics:  normal/t/chi2 distributions (CDF, inverse, p-values),
-               confidence intervals, t-tests, Jarque-Bera, correlations,
-               covariance, descriptive statistics
+- _input:     package input contract (PRIVATE): array-like coercion,
+              NaN/Inf/empty policy, determinism — every public function
+              follows it
+- core:       returns/prices algebra, rolling ops, EWMA, z-scores
+- statistics: normal/t/chi2 distributions (CDF, inverse, p-values),
+              confidence intervals, t-tests, Jarque-Bera, correlations,
+              covariance, descriptive statistics
 - probability: binomial math, expected value, Bayesian Beta-Bernoulli
                updating, credible intervals, Kelly criterion, Brier
                score, Wald SPRT
-- resampling:  block/stationary bootstrap, bootstrap CIs, permutation
-               tests, White's Reality Check, deflated Sharpe ratio
-- timeseries:  autocorrelation, Hurst exponent, variance-ratio test,
-               lagged feature matrix, smoothing
+- resampling: block/stationary bootstrap, bootstrap CIs, permutation
+              tests, White's Reality Check, deflated Sharpe ratio
+- timeseries: autocorrelation, Hurst exponent, variance-ratio test,
+              lagged feature matrix
 """
 
 from . import core
@@ -54,7 +57,7 @@ from . import probability
 from . import resampling
 from . import timeseries
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "core",

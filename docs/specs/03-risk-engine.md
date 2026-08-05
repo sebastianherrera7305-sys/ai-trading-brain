@@ -248,3 +248,18 @@ codebase's established convention. `docs/ARCHITECTURE.md` §11 stands as
 written; this doc records where the implementation corrected it (the
 mis-scoped `TrailingStopValidator`, §1 above) and where it caught a flaw
 in the ADD's own contract sketch before code depended on it.
+
+## Amendment (2026-08-05, during Subsystem 4)
+
+**`MaxConcurrentPositionsValidator` has been removed from this
+subsystem.** Starting Portfolio Engine (Subsystem 4) surfaced that §11
+and §12 assign the same concept — a platform-wide cap on open positions
+— to two different modules; §2's own module boundary table resolves it
+in Portfolio Engine's favor ("Risk Engine... never picks which trade to
+take among several"). See `docs/adr/0003-max-concurrent-positions-belongs-to-portfolio-not-risk.md`
+for the full reasoning. `RiskPolicy.max_concurrent_positions` and
+`AccountState.open_positions_count` no longer exist; everything else
+above (§1-§7) is unchanged and still describes what shipped. This
+section is appended, not folded into the sections above, for the same
+reason the ADD itself isn't silently rewritten after freezing — the
+original decision and its correction should both stay visible.

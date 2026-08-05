@@ -46,13 +46,11 @@ class RiskPolicy:
     min_tier: Tier
     daily_loss_limit_percent: float
     weekly_loss_limit_percent: float
-    max_concurrent_positions: int
 
 
 @dataclass(frozen=True)
 class AccountState:
     equity: float
-    open_positions_count: int
     daily_loss_limit_breached: bool
     weekly_loss_limit_breached: bool
     kill_switch_active: bool

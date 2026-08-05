@@ -61,18 +61,6 @@ class WeeklyLossLimitValidator(RiskValidator):
         return RiskCheckResult(self.name, RiskCheckStatus.APPROVE, "weekly loss limit not breached")
 
 
-class MaxConcurrentPositionsValidator(RiskValidator):
-    name = "max_concurrent_positions"
-
-    def check(self, candidate, policy: RiskPolicy, account: AccountState, unit_value_per_point=1.0) -> RiskCheckResult:
-        if account.open_positions_count >= policy.max_concurrent_positions:
-            return RiskCheckResult(
-                self.name, RiskCheckStatus.REJECT,
-                f"already at max concurrent positions ({account.open_positions_count}/{policy.max_concurrent_positions})",
-            )
-        return RiskCheckResult(self.name, RiskCheckStatus.APPROVE, "under max concurrent positions")
-
-
 class PositionSizeValidator(RiskValidator):
     """The one validator that can RESIZE instead of only approve/reject --
     computes fixed-fractional size from policy.risk_percent, caps it at
@@ -106,10 +94,11 @@ class PositionSizeValidator(RiskValidator):
 
 # ARCHITECTURE.md §11's stated order: kill switch and instrument-enabled
 # first (cheapest, most-restrictive, no arithmetic), then tier floor,
-# then position sizing, then the loss-limit/exposure checks, ending with
-# the pluggable account-rules validator (added by the caller -- see
+# then position sizing, then the loss-limit checks, ending with the
+# pluggable account-rules validator (added by the caller -- see
 # risk_engine/__init__.py for where NoOpAccountRules/TopstepAccountRules
-# would be appended).
+# would be appended). Platform-wide concurrent-position exposure is
+# Portfolio Engine's job, not Risk Engine's -- see ADR-0003.
 DEFAULT_VALIDATORS = [
     KillSwitchValidator(),
     InstrumentEnabledValidator(),
@@ -117,5 +106,4 @@ DEFAULT_VALIDATORS = [
     PositionSizeValidator(),
     DailyLossLimitValidator(),
     WeeklyLossLimitValidator(),
-    MaxConcurrentPositionsValidator(),
 ]

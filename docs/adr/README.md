@@ -15,3 +15,4 @@ Use `TEMPLATE.md` for new entries. Numbered sequentially, never reused.
 |---|---|---|
 | [0001](0001-unified-storage-engine.md) | Unified storage engine: DuckDB from the start, not SQLite-then-migrate | Accepted |
 | [0002](0002-registry-status-history-is-append-only.md) | Registry status is an append-only transition log, not a mutable column | Accepted |
+| [0003](0003-max-concurrent-positions-belongs-to-portfolio-not-risk.md) | MaxConcurrentPositionsValidator moves from Risk Engine to Portfolio Engine | Accepted |

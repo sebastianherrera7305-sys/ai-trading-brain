@@ -6,7 +6,6 @@ from trading_brain.risk_engine import (
     DailyLossLimitValidator,
     InstrumentEnabledValidator,
     KillSwitchValidator,
-    MaxConcurrentPositionsValidator,
     NoOpAccountRules,
     PositionSizeValidator,
     RiskCheckStatus,
@@ -43,7 +42,7 @@ def _candidate(tier=Tier.A, entry=100.0, stop_loss=95.0) -> TradeCandidate:
 def _policy(**overrides) -> RiskPolicy:
     defaults = dict(
         risk_percent=1.0, max_contracts=10, min_tier=Tier.B, daily_loss_limit_percent=3.0,
-        weekly_loss_limit_percent=6.0, max_concurrent_positions=3,
+        weekly_loss_limit_percent=6.0,
     )
     defaults.update(overrides)
     return RiskPolicy(**defaults)
@@ -51,7 +50,7 @@ def _policy(**overrides) -> RiskPolicy:
 
 def _account(**overrides) -> AccountState:
     defaults = dict(
-        equity=100_000.0, open_positions_count=0, daily_loss_limit_breached=False,
+        equity=100_000.0, daily_loss_limit_breached=False,
         weekly_loss_limit_breached=False, kill_switch_active=False, instrument_enabled=True,
     )
     defaults.update(overrides)
@@ -88,13 +87,6 @@ def test_daily_and_weekly_loss_limit_validators_reject_when_breached():
     assert daily.check(_candidate(), _policy(), _account(daily_loss_limit_breached=False)).status == RiskCheckStatus.APPROVE
     assert weekly.check(_candidate(), _policy(), _account(weekly_loss_limit_breached=True)).status == RiskCheckStatus.REJECT
     assert weekly.check(_candidate(), _policy(), _account(weekly_loss_limit_breached=False)).status == RiskCheckStatus.APPROVE
-
-
-def test_max_concurrent_positions_rejects_at_the_cap():
-    v = MaxConcurrentPositionsValidator()
-    policy = _policy(max_concurrent_positions=3)
-    assert v.check(_candidate(), policy, _account(open_positions_count=2)).status == RiskCheckStatus.APPROVE
-    assert v.check(_candidate(), policy, _account(open_positions_count=3)).status == RiskCheckStatus.REJECT
 
 
 def test_no_op_account_rules_always_approves():

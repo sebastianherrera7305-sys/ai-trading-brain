@@ -111,7 +111,7 @@ def run(ctx):
     bh = _clean(buyhold)
     sma = _clean(sma_series)
     ema = _clean(ema_series)
-    c1 = _clean(c001_best)
+    c1 = _clean(c001_best.reshape(1, -1))[0]
 
     random_pool = rnd.reshape(-1)
     bh_row = bh[0]

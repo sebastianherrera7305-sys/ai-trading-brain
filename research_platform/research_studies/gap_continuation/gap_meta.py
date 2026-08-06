@@ -22,7 +22,7 @@ study's assembly script (data engineering, no statistics).
 
 import numpy as np
 
-import quant_research as qr
+from _common import qr  # noqa: E402  (bootstraps the quant_research import path)
 
 N_BOOT = 1500
 

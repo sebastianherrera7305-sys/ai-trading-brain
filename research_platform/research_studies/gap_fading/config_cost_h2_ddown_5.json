@@ -1,0 +1,30 @@
+{
+  "author": "sebastian",
+  "experiment": {
+    "dataset": "es-f-10y-ohlc-v1",
+    "function": "run",
+    "module": "gap_fading",
+    "parameters": {
+      "cost_bps": 5.0,
+      "direction": "down",
+      "hold_days": 2,
+      "threshold_pct": 0.5
+    }
+  },
+  "hypothesis": "H-MS-01",
+  "objective": "Cost robustness: same grid as the scan but with 5.0 bps round-trip cost (seed 0-2).",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "sweep": {
+    "parameter": "threshold_pct",
+    "values": [
+      0.3,
+      0.5,
+      0.7,
+      1.0
+    ]
+  }
+}

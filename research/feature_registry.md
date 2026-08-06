@@ -72,11 +72,18 @@ Validation status: `verified` = exercised and reproduced in C001;
 - **Complexity:** O(n).
 - **Failure modes:** roll-day price jumps masquerade as gaps (DS-001 caveat).
 
-### F-GAP-COMP — gap/intraday decomposition — `planned (P0, C002)`
+### F-GAP-COMP — gap/intraday decomposition — `verified`
 - **Definition:** overnight component o_t = open_t/close_{t−1} − 1; intraday
-  i_t = close_t/open_t − 1; plus cumulative series of each.
-- **Inputs:** OHLC. **Lag:** causal.
-- **Unlocks:** H-TOD-01, H-MS-01 (C002).
+  i_t = close_t/open_t − 1; plus cumulative series of each and the Pearson
+  correlation of the two legs.
+- **Inputs:** OHLC. **Lag:** causal. **Complexity:** O(n).
+- **Implementation:** `research_platform/research_studies/features/`
+  (`overnight_gap`, `gap_decomposition`); verified 2026-08-06 (overnight
+  component reproduces C001's gap_series exactly).
+- **Unlocks:** H-TOD-01, H-MS-01 (C002 — closing-analysis deliverable; not a
+  strategy signal).
+- **Failure modes:** roll-day price jumps masquerade as gaps (same caveat as
+  F-GAP); cumulative drift uses simple-return sums (documented convention).
 
 ### F-SHARPE / F-DD / F-CR / F-YEAR — `_common` helpers — `verified`
 - ann_sharpe: mean/std × √252 of finite daily P&L; max_drawdown via

@@ -1,0 +1,30 @@
+{
+  "author": "sebastian",
+  "experiment": {
+    "dataset": "es-f-10y-ohlc-v1",
+    "function": "run",
+    "module": "gap_fading",
+    "parameters": {
+      "cost_bps": 0.0,
+      "direction": "both",
+      "hold_days": 1,
+      "threshold_pct": 0.5
+    }
+  },
+  "hypothesis": "H-MS-01",
+  "objective": "Scan threshold_pct in [0.3, 0.5, 0.7, 1.0] for hold_days=1, direction=both at zero cost (seed 0-2): the search set for the fade trial matrix.",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "sweep": {
+    "parameter": "threshold_pct",
+    "values": [
+      0.3,
+      0.5,
+      0.7,
+      1.0
+    ]
+  }
+}

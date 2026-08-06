@@ -1,0 +1,19 @@
+{
+  "author": "sebastian",
+  "experiment": {
+    "dataset": "es-f-10y-ohlc-v1",
+    "function": "run",
+    "module": "gap_fading",
+    "parameters": {
+      "cost_bps": 0.0,
+      "direction": "both",
+      "hold_days": 1,
+      "threshold_pct": 0.5
+    }
+  },
+  "hypothesis": "H-MS-01",
+  "objective": "Smoke test: verify gap_fading executes end-to-end against the registered ES dataset and emits metrics/tests/artifacts.",
+  "seeds": [
+    0
+  ]
+}

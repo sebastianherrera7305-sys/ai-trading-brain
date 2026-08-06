@@ -1,0 +1,16 @@
+{
+  "author": "sebastian",
+  "experiment": {
+    "dataset": "es-gap-fade-trial-matrix-v1",
+    "function": "run",
+    "module": "gap_fading_meta",
+    "parameters": {}
+  },
+  "hypothesis": "H-MS-01",
+  "objective": "Meta-validation of the Gap Fading search: DSR, White's Reality Check, benchmark comparisons and the paired C001-vs-C002 best-cell comparison over the assembled fade trial matrix (dataset registered by the assembly script). Seeds 0-2.",
+  "seeds": [
+    0,
+    1,
+    2
+  ]
+}

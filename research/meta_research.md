@@ -89,3 +89,4 @@ better experiments, and efficient elimination of false ideas.
 | 2026-08-06 | Laboratory architecture FROZEN (`architecture_freeze.md`) | final integration layer complete: knowledge graph, consistency checks, queries, dashboard integration |
 | 2026-08-06 | Knowledge graph generator (`research/graph.py`) | deterministic view over canonical registries; 16 automated checks; never hand-edited |
 | 2026-08-06 | `reproduce` documented to require `--cwd research_studies/<campaign>` | 3 of 7 reproduction attempts unverifiable due to wrong working directory |
+| 2026-08-06 | Readiness review completed (`RESEARCH_READINESS_REPORT.md`) | pre-launch audit: 79/100 ready-with-conditions; blocking items B1 (explicit decision criteria), B2 (H-ID in experiment records), B3 (clean-tree at origin) before C002 |

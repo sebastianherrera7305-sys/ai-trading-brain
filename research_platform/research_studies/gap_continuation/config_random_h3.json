@@ -1,0 +1,19 @@
+{
+  "author": "sebastian",
+  "experiment": {
+    "dataset": "es-f-10y-ohlc-v1",
+    "function": "run",
+    "module": "random_entries",
+    "parameters": {
+      "entry_prob": 0.05,
+      "hold_days": 3
+    }
+  },
+  "hypothesis": "Overnight gaps in ES daily futures tend to continue (gap continuation): entering in the gap direction after a gap exceeding threshold_pct and holding for hold_days yields a positive edge after transaction costs.",
+  "objective": "Benchmark: random non-overlapping entries (p=0.05), hold_days=3; stochastic, 3 seeds.",
+  "seeds": [
+    0,
+    1,
+    2
+  ]
+}

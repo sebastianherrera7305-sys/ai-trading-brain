@@ -1,0 +1,14 @@
+{
+  "author": "sebastian",
+  "experiment": {
+    "dataset": "es-f-10y-ohlc-v1",
+    "function": "run",
+    "module": "buy_hold",
+    "parameters": {}
+  },
+  "hypothesis": "Overnight gaps in ES daily futures tend to continue (gap continuation): entering in the gap direction after a gap exceeding threshold_pct and holding for hold_days yields a positive edge after transaction costs.",
+  "objective": "Benchmark: fully invested buy & hold of the ES index.",
+  "seeds": [
+    0
+  ]
+}

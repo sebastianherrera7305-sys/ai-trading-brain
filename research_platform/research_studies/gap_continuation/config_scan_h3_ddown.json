@@ -1,0 +1,30 @@
+{
+  "author": "sebastian",
+  "experiment": {
+    "dataset": "es-f-10y-ohlc-v1",
+    "function": "run",
+    "module": "gap_strategy",
+    "parameters": {
+      "cost_bps": 0.0,
+      "direction": "down",
+      "hold_days": 3,
+      "threshold_pct": 0.5
+    }
+  },
+  "hypothesis": "Overnight gaps in ES daily futures tend to continue (gap continuation): entering in the gap direction after a gap exceeding threshold_pct and holding for hold_days yields a positive edge after transaction costs.",
+  "objective": "Scan threshold_pct in [0.3, 0.5, 0.7, 1.0] for hold_days=3, direction=down at zero cost (seed 0-2): the search set for the trial matrix.",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "sweep": {
+    "parameter": "threshold_pct",
+    "values": [
+      0.3,
+      0.5,
+      0.7,
+      1.0
+    ]
+  }
+}

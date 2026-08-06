@@ -77,6 +77,8 @@ missing data listed in `limitations` and the catalog status set accordingly).
   incremental information: it converts C001's "no edge" into either "no gap
   edge at all" or "opposite-sign edge".
 - **Edge DB outcome:** E-00xx (verdict per decision criteria above).
+- **Spec:** `research_platform/research_studies/gap_fading/campaign_spec.md`
+  (pre-registered protocol, 2026-08-06; deviations require a meta entry).
 
 ### C003 — Trend Following Multi-Market (H-TF-01, H-TF-02) — STATUS: ready
 - **Objective:** Which markets respond to time-series momentum/breakout rules,

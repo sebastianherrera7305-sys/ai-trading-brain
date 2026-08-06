@@ -67,14 +67,20 @@ better experiments, and efficient elimination of false ideas.
   basis), but mean/trade visibly decayed; report both.
 
 ### Backlog implications
-- The opposite-sign test (gap fading, C002) is now the single most
-  information-dense experiment: it converts "no continuation edge" into
-  "no gap edge" or "opposite edge".
+- **C002 closed (2026-08-06, REJECTED):** the opposite-sign test (gap fading,
+  H-MS-01) returned DSR p=0.370 and RC p=0.083–0.101 despite stronger raw
+  statistics than C001 (permutation p=0.0007, Welch p=0.020). The gap family
+  is now exhausted on daily ES in both signs (NK-0003, E-0004) — two
+  independent rejections with the same methodology = the strongest negative
+  calibration point so far. No new single-market gap variant should be
+  proposed (both signs covered).
+- The raw-vs-corrected gap (strong per-cell stats, DSR/RC fail) is a second
+  confirmation of NK-0002: nominal significance in a searched grid is not
+  evidence. The delayed-fill layer (Sharpe 0.569 → 0.299, p=0.061) adds a
+  new robustness insight: same-day open fills are the weak assumption.
 - Multi-market trend/reversion campaigns (C003/C004) will measure whether the
   ES drift/trend dominance is a market property or a window property.
 - C005 (calendar) will provide the next false-discovery calibration point.
-- No new single-market gap variant should be proposed until C002 closes:
-  gap-continuation variants would be re-treading E-0001.
 
 ## 2. Log of process improvements
 
@@ -94,3 +100,6 @@ better experiments, and efficient elimination of false ideas.
 | 2026-08-06 | **Governance B2**: canonical H-ID mandatory in experiment configs (`is_canonical_hypothesis_id` at config load + record creation; missing ID = ValidationError); 39 historical C001 configs carry H-C001 | hypothesis field held free text (2 variants); hypothesis→campaign→experiment joins were only possible via the graph's module mapping |
 | 2026-08-06 | **Governance B3**: runs record `quant_research_version`; any run on a dirty git tree is marked UNVERIFIABLE_REPRODUCTION (may execute, cannot support acceptance) | 8/354 origin experiments recorded dirty; N4 gap (version not in env) from the readiness review |
 | 2026-08-06 | Validation milestone: B1/B2/B3 controls verified live; C002_READY = PASS (precondition: F-GAP-COMP implemented in-campaign, pledged by roadmap) | `readiness_validation_report.md` — 101/101 tests, config-validation demos, dirty/clean env snapshots, checksums re-verified |
+| 2026-08-06 | **C002 closed (REJECTED)** — gap family exhausted on ES daily in both signs (E-0004, NK-0003) | DSR p=0.370, RC p=0.083–0.101 despite raw permutation p=0.0007 — second confirmation of NK-0002 |
+| 2026-08-06 | **Store outside `/tmp`** — the execution store must live outside the OS tmp dir (used `~/.research`; re-execution verified identical 36/36 + 36/36) | macOS periodic cleanup deleted `/tmp/research-study` mid-campaign; evidence reconstructed deterministically, incident registered in report §2 |
+| 2026-08-06 | Meta-consumer input-shape validation: consumer must run against a real assembled matrix pre-launch | `gap_fading_meta.py:114` 1-D series bug surfaced only at runtime (C001's meta never ran); fixed + 3 regression tests (R2) |

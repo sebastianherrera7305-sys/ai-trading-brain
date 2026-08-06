@@ -202,15 +202,19 @@ def main() -> int:
         "",
         "- **E-0001:** Gap continuation on ES daily is REJECTED (DSR p=0.285, "
         "White's RC p≈0.39).",
+        "- **E-0004:** Gap FADING on ES daily is REJECTED (DSR p=0.370, White's "
+        "RC p=0.083-0.101) — the gap family is exhausted on daily ES in both "
+        "signs (NK-0003).",
         "- **E-0002:** On ES daily 2016-2026 the benchmark ladder is: "
         "EMA(10,100) 0.89 > SMA(10,100) 0.86 > buy & hold 0.79 > best gap "
         "cell 0.52.",
         "- **E-0003:** Measured false-discovery calibration: 14% of 36 "
         "searched cells nominally significant at 5% — single-test gates are "
-        "insufficient for grids.",
+        "insufficient for grids (confirmed again by C002: 39% nominal, DSR "
+        "p=0.370).",
         "- **NK-0001:** Gap continuation may only be reinvestigated under the "
         "documented triggers (intraday fills, volume conditioning, new "
-        "markets, or the opposite-sign rule C002).",
+        "markets).",
         "- **Graph headline — best dataset:** %s (%d experiments)." % (
             hl["best_dataset"], hl["best_dataset_experiments"]),
         "- **Graph headline — best benchmark eliminator:** %s (beats %d "
@@ -219,7 +223,8 @@ def main() -> int:
         "",
         "## 7. Read next",
         "",
-        "- Roadmap: `research/roadmap.md` (next campaign: C002 gap fading).",
+        "- Roadmap: `research/roadmap.md` (next campaign: C003 trend "
+        "following multi-market).",
         "- Meta-learning: `research/meta_learning.md`.",
         "- Registry of record for components: `research/asset_registry.md`.",
         "- Knowledge graph: `research/graph_report.md` + `research/graph_snapshot.json`.",

@@ -92,11 +92,41 @@ E-<NNNN>:
 - **related:** E-0001; meta_research.md §2.
 - **verdict_evidence:** registry queries.
 
+### E-0004 — Campaign C002: Overnight Gap Fading
+- **campaign:** C002
+- **date:** 2026-08-06
+- **verdict:** `rejected`
+- **hypotheses:** gap fading on daily ES (H-MS-01, sign-flip of C001)
+- **experiments:** 36 cells (4 thr × 3 hold × 3 dir) × 3 seeds @ 0 bps = 108
+  runs; 216 cost-ladder runs @ 2.5/5 bps; 108 delayed-fill runs; 3
+  meta-validation runs. Commits 6aeae2c (C1), c4a4199 (C2), eb0667c (matrix).
+- **statistical_confidence:** best cell (0.5%, h=3, both) raw statistics strong
+  (permutation p=0.0007; Welch p=0.020; bootstrap CI [+0.066%, +0.949%];
+  P(win>50%)=0.954; SPRT undecided). **Decisive:** DSR p=0.370; White's Reality
+  Check p=0.083–0.101 (3 seeds). Not significant at 5%.
+- **robustness:** survives the cost ladder (mean/trade +0.525% → +0.475% at
+  5 bps) but the delayed-fill layer loses significance (p=0.061, Sharpe 0.569 →
+  0.299) and per-year means are negative in 5 of 11 years; 39% of cells
+  nominally significant (within the C001 false-discovery calibration).
+- **markets:** ES. **timeframes:** 1d, 2016-08 → 2026-08.
+- **benchmarks:** best fade trial not distinguishable from buy & hold (p=0.214),
+  random entries (p=0.188), best SMA (p=0.445) or best EMA (p=0.383); mean daily
+  return below buy & hold and both crossovers.
+- **limitations:** single market; continuous front-month; no volume; same-day
+  open fills modeled (next-close only as robustness check); non-overlapping
+  trades (114); storage incident in the first execution pass (re-executed
+  deterministically, 36/36 + 36/36 series verified identical).
+- **related:** E-0001, E-0002, E-0003, NK-0003;
+  report `research_platform/research_studies/gap_fading/report.md`.
+- **verdict_evidence:** DSR p=0.370 and RC p≈0.083–0.101 with all benchmark and
+  paired C001 comparisons not significant (p ≥ 0.188).
+
 ---
 
 ## Queries the Edge DB supports
 
-- What have we rejected on ES daily? → E-0001 (gap continuation).
+- What have we rejected on ES daily? → E-0001 (gap continuation), E-0004 (gap fading).
 - Which benchmarks dominate on ES daily? → E-0002.
 - What is our measured false-discovery calibration? → E-0003.
+- Is the gap family on ES daily exhausted? → yes in both signs: E-0001 + E-0004 (NK-0003).
 - (Future) Which domains are exhausted vs open → per-domain scan of verdicts.

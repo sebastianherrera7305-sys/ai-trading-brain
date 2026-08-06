@@ -47,12 +47,13 @@ missing data listed in `limitations` and the catalog status set accordingly).
 
 ## Prioritized backlog (ranked by expected information value per unit effort)
 
-### C002 — Gap Fading (H-MS-01) — STATUS: ready, next
+### C002 — Gap Fading (H-MS-01) — STATUS: **closed (REJECTED, 2026-08-06)**
 - **Research question:** Does the *opposite* sign of the C001 rule carry the
   edge (gaps fade instead of continue)?
 - **Hypothesis:** H-MS-01 (catalog; every experiment config carries this ID).
 - **Experiment matrix:** 36 cells × 3 seeds @ 0 bps + 2.5/5 bps ladder; reuses
-  C001 modules (sign flip + same battery).
+  C001 modules (sign flip + same battery); delayed-fill layer (spec §7.5);
+  3 meta-validation runs.
 - **Success criteria (ACCEPTED):** DSR p < 0.05 after multiplicity correction
   AND the best cell beats the C001 best cell (Sharpe 0.52) on identical cost
   basis AND ≥ 1 benchmark (buy & hold 0.79 or EMA(10,100) 0.89) at 0 bps.
@@ -66,19 +67,20 @@ missing data listed in `limitations` and the catalog status set accordingly).
 - **Benchmark comparison:** buy & hold, EMA(10,100), random entries (seed 0),
   **C001 best cell** — all on the same P&L basis as the strategy (same daily
   bars, window, and cost handling).
-- **Decision:** one of ACCEPTED | REJECTED | INCONCLUSIVE | REQUIRES_MORE_DATA
-  (expected: REJECTED → closes the gap family on ES daily; ACCEPTED →
-  first edge candidate; INCONCLUSIVE if the fade side has too few events /
-  SPRT undecided; REQUIRES_MORE_DATA if the fade event count is inadequate on
-  ES daily — then the follow-up is a multi-market C002 extension, recorded as
-  edge verdict `inconclusive` with the limitation listed).
-- **Robustness:** cost ladder, per-year, vol regime; seed stability.
+- **Decision:** **REJECTED** — DSR p=0.370, RC p=0.083–0.101 (all ≥ 0.05);
+  best cell (0.5%, h=3, both, Sharpe 0.569 ann) not distinguishable from any
+  benchmark (p ≥ 0.188) or from C001's best cell (p=0.328); delayed layer
+  loses significance (p=0.061). Gap family closed on daily ES (with C001):
+  NK-0003.
+- **Robustness:** cost ladder survives (+0.525% → +0.475% mean/trade at
+  5 bps); per-year negative in 5 of 11 years; delayed fill Sharpe 0.569 →
+  0.299; seed stability verified (3 meta seeds).
 - **Expected value/cost:** High / S — the cheapest experiment with the highest
   incremental information: it converts C001's "no edge" into either "no gap
-  edge at all" or "opposite-sign edge".
-- **Edge DB outcome:** E-00xx (verdict per decision criteria above).
+  edge at all" or "opposite-sign edge". **Outcome: no gap edge at all.**
+- **Edge DB outcome:** E-0004 (rejected). NK-0003 added to negative knowledge.
 - **Spec:** `research_platform/research_studies/gap_fading/campaign_spec.md`
-  (pre-registered protocol, 2026-08-06; deviations require a meta entry).
+  (pre-registered protocol, 2026-08-06; deviations registered in report §2/§5).
 
 ### C003 — Trend Following Multi-Market (H-TF-01, H-TF-02) — STATUS: ready
 - **Objective:** Which markets respond to time-series momentum/breakout rules,

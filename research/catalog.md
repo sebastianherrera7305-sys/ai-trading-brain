@@ -37,7 +37,8 @@ Check for searched grids. All statistics via `quant_research` (frozen v0.3.0).
 - **Methodology:** Identical battery to C001 (permutation gate vs signed pool,
   Welch, bootstrap, Bayesian, SPRT), 36-cell grid, DSR/RC meta-validation.
 - **Benchmarks:** buy & hold, EMA(10,100), random entries, C001 best cell.
-- **Effort:** S. **Info value:** High. **Status:** `ready` (Campaign 002).
+- **Effort:** S. **Info value:** High. **Status:** `rejected` (Campaign 002,
+  closed 2026-08-06; E-0004, NK-0003 — gap family exhausted on daily ES).
 
 ### H-MS-02 — Daily range position predicts next-day direction
 - **Description:** The position of the close within the day's [low, high]

@@ -47,7 +47,19 @@ re-run checks before changing a grade).
 | Checksum | `519cb85d7aa313a578dc092e0961507c149137f17782d4e160dc4951b1a00520` (105,979 B) |
 | Research readiness | Ready; consumed by gap_meta (26 metrics reproduced) |
 
-## DS-003 — CL daily OHLC 10y (`data/CL_F_10y.csv`) — **Grade B**
+## DS-003 — Gap Fading trial matrix (`es-gap-fade-trial-matrix-v1`) — **Grade A**
+
+| Field | Value |
+|---|---|
+| Source | `data/es_gap_fade_trial_matrix_v1.npz` → registered (id `54fcd511…bba5`) |
+| Coverage | 36 strategy cells + 36 delayed cells × 2,513 days; 16 benchmark series; c001 best-cell series; F-GAP-COMP decomposition arrays |
+| Preprocessing | Assembled from registered experiment artifacts (`assemble_trial_matrix.py`, B3 evidence gate); data engineering only, no statistics |
+| Look-ahead risk | None — rows are campaign daily P&L |
+| Continuous-contract methodology | Inherits DS-001 caveat |
+| Checksum | `7862a5ae7c9ad5855b9125337258261db127b289edaeeaea700caac069c283f7` (211,673 B) |
+| Research readiness | Ready; consumed by gap_fading_meta (DSR/RC, reproduced); cell identity vs re-executed seed-0 runs verified 36/36 + 36/36 |
+
+## DS-004 — CL daily OHLC 10y (`data/CL_F_10y.csv`) — **Grade B**
 
 | Field | Value |
 |---|---|
@@ -59,11 +71,11 @@ re-run checks before changing a grade).
 | Continuous-contract methodology | **Undocumented (provider)** |
 | Research readiness | Needs registration (mirror DS-001 pipeline); ready for C003/C004/C007 |
 
-## DS-004 — GC daily OHLC 10y (`data/GC_F_10y.csv`) — **Grade B**
+## DS-005 — GC daily OHLC 10y (`data/GC_F_10y.csv`) — **Grade B**
 
 As DS-003: 2,511 bars, 2016-08-04 → 2026-08-04, 0 missing/duplicates, ascending. Needs registration.
 
-## DS-005 — EURUSD daily OHLC 10y (`data/EURUSD_X_10y.csv`) — **Grade C**
+## DS-006 — EURUSD daily OHLC 10y (`data/EURUSD_X_10y.csv`) — **Grade C**
 
 | Field | Value |
 |---|---|
@@ -75,7 +87,7 @@ As DS-003: 2,511 bars, 2016-08-04 → 2026-08-04, 0 missing/duplicates, ascendin
 | Research readiness | Requires preprocessing: weekend filtering + alignment to CME trading calendar before any cross-market use |
 | Known limitations | Different date axis vs ES/CL/GC (2,601 vs ~2,512 bars); spot, not roll-adjusted |
 
-## DS-006..009 — 2y daily files (`ES_F`, `CL_F`, `GC_F`, `EURUSD_X`) — **Grade C**
+## DS-007..010 — 2y daily files (`ES_F`, `CL_F`, `GC_F`, `EURUSD_X`) — **Grade C**
 
 Coverage ~2024-08 → 2026-08 (501–517 bars, EURUSD with 60 weekend bars).
 Integrity clean (0 missing, no duplicates). These are tails of the 10y series;

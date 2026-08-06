@@ -297,7 +297,7 @@ def cmd_compare(args: argparse.Namespace) -> int:
             ))
         elif kind == "failures":
             _print(failures(store, limit=args.limit))
-        elif kind == "alpha_by_assumption":
+        elif kind in ("alpha_by_assumption", "alpha-by-assumption"):
             _print(alpha_by_assumption(
                 store,
                 args.metric, direction=args.direction, tag=args.tag,

@@ -57,7 +57,7 @@ def main() -> int:
     # --- Benchmark wins: strategy cells vs buy & hold on the same basis ---
     buyhold = None
     for e in experiments:
-        if e.module == "buy_hold":
+        if e.module == "buy_hold" and e.status == "completed":
             run = store.get_latest_run(e.uuid)
             if run is not None:
                 buyhold = run.metrics.get("ann_sharpe")
@@ -69,7 +69,8 @@ def main() -> int:
     if buyhold is not None:
         for e in experiments:
             p = e.params
-            if (e.module == "gap_strategy" and e.seed == 0
+            if (e.module == "gap_strategy" and e.status == "completed"
+                    and e.seed == 0
                     and float(p.get("cost_bps", -1)) == 0.0):
                 key = (float(p["threshold_pct"]), int(p["hold_days"]),
                        str(p["direction"]))
@@ -95,7 +96,7 @@ def main() -> int:
     nk_entries = count_pattern(RESEARCH_DIR / "negative_knowledge.md", r"^## NK-\d+")
     assets = count_pattern(RESEARCH_DIR / "asset_registry.md", r"^\| AS-")
     features_doc = count_pattern(RESEARCH_DIR / "feature_registry.md", r"^### F-")
-    roadmap_campaigns = count_pattern(RESEARCH_DIR / "roadmap.md", r"^## C\d{3}")
+    roadmap_campaigns = count_pattern(RESEARCH_DIR / "roadmap.md", r"^\| C0\d\d \|")
     raw_csvs = len(list((REPO_ROOT / "data").glob("*.csv")))
     hypotheses_tested = edge_accepted + edge_rejected
 

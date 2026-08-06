@@ -18,8 +18,10 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RESEARCH_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO_ROOT / "research_platform"))
+sys.path.insert(0, str(RESEARCH_DIR))
 
 from research_platform.store import ResearchStore  # noqa: E402
+from graph import analyze as analyze_graph  # noqa: E402
 
 
 def count_pattern(path: Path, pattern: str) -> int:
@@ -34,6 +36,7 @@ def main() -> int:
     args = ap.parse_args()
 
     store = ResearchStore(args.root)
+    graph_result, _, _ = analyze_graph(args.root)
 
     # --- Store statistics ---
     experiments = store.find_experiments()
@@ -114,6 +117,19 @@ def main() -> int:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     repro_rate = (n_repro_matched / n_repro) if n_repro else 0.0
 
+    failed_checks = [c for c in graph_result["checks"] if c["status"] == "fail"]
+    graph_checks_detail = "; ".join(
+        "%s: %s" % (c["id"], c["detail"][:110]) for c in failed_checks) or "none"
+    graph_nodes = graph_result["n_nodes"]
+    graph_edges = graph_result["n_edges"]
+    graph_score = graph_result["consistency_score"]
+    graph_orphans = len(graph_result["orphan_nodes"])
+    n_checks = len(graph_result["checks"])
+    n_checks_pass = sum(1 for c in graph_result["checks"] if c["status"] == "pass")
+    n_checks_warn = sum(1 for c in graph_result["checks"] if c["status"] == "warn")
+    graph_cov = graph_result["coverage"]
+    hl = graph_result["headline"]
+
     def row(label, value):
         return "| %s | %s |" % (label, value)
 
@@ -178,6 +194,9 @@ def main() -> int:
         row("Raw data files in repo (incl. unregistered)", raw_csvs),
         row("Reusable assets (asset registry)", assets),
         row("Implemented features documented", features_doc),
+        row("Knowledge graph nodes", graph_nodes),
+        row("Knowledge graph relationships", graph_edges),
+        row("Orphan assets (graph)", graph_orphans),
         "",
         "## 6. Headline knowledge",
         "",
@@ -192,12 +211,40 @@ def main() -> int:
         "- **NK-0001:** Gap continuation may only be reinvestigated under the "
         "documented triggers (intraday fills, volume conditioning, new "
         "markets, or the opposite-sign rule C002).",
+        "- **Graph headline — best dataset:** %s (%d experiments)." % (
+            hl["best_dataset"], hl["best_dataset_experiments"]),
+        "- **Graph headline — best benchmark eliminator:** %s (beats %d "
+        "cells)." % (hl["best_benchmark_eliminator"],
+                    hl["best_benchmark_beats"]),
         "",
         "## 7. Read next",
         "",
         "- Roadmap: `research/roadmap.md` (next campaign: C002 gap fading).",
         "- Meta-learning: `research/meta_learning.md`.",
         "- Registry of record for components: `research/asset_registry.md`.",
+        "- Knowledge graph: `research/graph_report.md` + `research/graph_snapshot.json`.",
+        "- Architecture: `research/architecture_freeze.md`.",
+        "",
+        "## 8. Knowledge graph (generated view)",
+        "",
+        "Graph metrics are derived from the canonical registries by "
+        "`research/graph.py`; see `research/graph_report.md` for full checks "
+        "and queries.",
+        "",
+        "| Metric | Value |",
+        "|---|---|",
+        row("Graph nodes", graph_nodes),
+        row("Graph relationships", graph_edges),
+        row("Consistency score", "%.1f%% (%d/%d checks without failure)" % (
+            graph_score, n_checks_pass + n_checks_warn, n_checks)),
+        row("Checks failed", "%d (%s)" % (
+            n_checks - n_checks_pass - n_checks_warn, graph_checks_detail)),
+        row("Orphan assets", graph_orphans),
+        row("Documentation coverage", "%.1f%%" % graph_cov["documentation"]),
+        row("Traceability coverage", "%.1f%%" % graph_cov["traceability"]),
+        row("Reproducibility coverage", "%.1f%% (%d matched of %d attempts)" % (
+            graph_cov["reproducibility"], graph_cov["reproduction_matched"],
+            graph_cov["reproduction_attempts"])),
         "",
     ]
     out = RESEARCH_DIR / "dashboard.md"

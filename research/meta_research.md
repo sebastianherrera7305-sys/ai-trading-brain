@@ -86,3 +86,6 @@ better experiments, and efficient elimination of false ideas.
 | C001 | Commit-before-run discipline | dirty-tree reproduction refused by framework |
 | C001 | Report both Sharpe and mean/trade at each cost | Sharpe hid cost decay at 5 bps |
 | C001 | `from _common import qr, ...` as module standard | import-order failure outside framework cwd |
+| 2026-08-06 | Laboratory architecture FROZEN (`architecture_freeze.md`) | final integration layer complete: knowledge graph, consistency checks, queries, dashboard integration |
+| 2026-08-06 | Knowledge graph generator (`research/graph.py`) | deterministic view over canonical registries; 16 automated checks; never hand-edited |
+| 2026-08-06 | `reproduce` documented to require `--cwd research_studies/<campaign>` | 3 of 7 reproduction attempts unverifiable due to wrong working directory |

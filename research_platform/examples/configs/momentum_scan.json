@@ -1,0 +1,25 @@
+{
+  "hypothesis": "A momentum strategy's Sharpe ratio improves with longer lookback windows on this synthetic market.",
+  "objective": "Scan window sizes and estimate the momentum effect size across seeds.",
+  "author": "research-platform-team",
+  "assumptions": [
+    "prices follow a geometric random walk with constant drift",
+    "no transaction costs",
+    "signals are one-bar lagged by construction"
+  ],
+  "tags": ["momentum", "scan", "example"],
+  "dataset": null,
+  "experiment": {
+    "module": "examples.experiments.momentum_scan",
+    "parameters": {
+      "n_points": 2000,
+      "drift": 0.0002,
+      "volatility": 0.01
+    }
+  },
+  "sweep": {
+    "parameter": "window",
+    "values": [5, 10, 20, 40]
+  },
+  "seeds": [0, 1, 2]
+}

@@ -12,19 +12,18 @@ the canonical documents, the store, or the generated knowledge graph
 
 ## 0. Executive summary
 
-| Area | Score | Verdict |
-|---|---|---|
-| 1. Hypothesis Catalog Integrity | 95/100 | PASS |
-| 2. Campaign Readiness | 68/100 | PASS WITH CONDITIONS |
-| 3. Evidence Model | 95/100 | PASS |
-| 4. Reproducibility Readiness | 72/100 | PASS WITH CONDITIONS |
-| 5. Knowledge Accumulation | 65/100 | PASS WITH CONDITIONS |
-| **Overall** | **79/100** | **READY WITH CONDITIONS** |
+| Area | Score (initial) | Score (after B1–B3) | Verdict |
+|---|---|---|---|
+| 1. Hypothesis Catalog Integrity | 95/100 | 95/100 | PASS |
+| 2. Campaign Readiness | 68/100 | 82/100 | PASS |
+| 3. Evidence Model | 95/100 | 96/100 | PASS |
+| 4. Reproducibility Readiness | 72/100 | 85/100 | PASS |
+| 5. Knowledge Accumulation | 65/100 | 70/100 | PASS |
+| **Overall** | **79/100** | **86/100** | **READY** |
 
-The laboratory can accumulate research knowledge reliably over many future
-campaigns. **Three blocking items** (B1–B3, §3) must pass before C002
-executes; they are convention/documentation items costing ≤ 1 day total, not
-architecture changes. All other gaps (§4) are non-blocking and scheduled.
+The three blocking items (B1–B3, §3) are **resolved** (evidence below); all
+remaining gaps are non-blocking and scheduled. The laboratory passes the
+C002 launch gate (Gates A–G, `C002_LAUNCH_CHECKLIST.md`).
 
 ---
 
@@ -63,7 +62,7 @@ the template: Datasets, Features, Markets, Expected decision criteria.**
 | Campaign | Question | Hypothesis | Datasets | Features | Benchmarks | Validation | Decision criteria |
 |---|---|---|---|---|---|---|---|
 | C001 (closed) | ✓ | ✓ (pre-catalog) | ✓ | ✓ | ✓ | ✓ | ✓ (verdict + verdict_evidence) |
-| **C002** | ✓ | ✓ H-MS-01 | via H-MS-01 (A) | via H-MS-01 | ✓ incl. C001 best cell | ✓ battery + DSR/RC + paired meta | **MISSING** (only "expected entry E-00xx") |
+| **C002** | ✓ | ✓ H-MS-01 | via H-MS-01 (A) | via H-MS-01 | ✓ incl. C001 best cell | ✓ battery + DSR/RC + paired meta | ✓ success/rejection/decision rules (B1) |
 | C003 | ✓ | ✓ | ✓ (register CL/GC/EURUSD) | via H-TF-01/02 | ✓ | ✓ | MISSING |
 | C004 | ✓ | ✓ | implicit | via H-MR-01/02 | ✓ | ✓ | MISSING |
 | C005 | ✓ | ✓ | implicit | via H-SESS-01/02 | via H-SESS-01 | ✓ | MISSING |
@@ -75,13 +74,14 @@ the template: Datasets, Features, Markets, Expected decision criteria.**
 | C011 | in roadmap only (rank 5) — **no registry card yet** | | | | | | |
 
 Findings:
-- No campaign card states explicit accept/reject decision criteria. C001's
-  verdict discipline (DSR p<0.05 after multiplicity correction, beating
-  benchmarks on identical basis) exists in edge_database + negative knowledge,
-  but is not codified per card. **B1.**
-- C002 is the most complete card (reuses C001 battery and matrix; benchmarks
-  include the C001 best cell for direct comparison). Only decision criteria
-  missing.
+- **B1 resolved**: the campaign card template now requires research question,
+  hypothesis, success criteria, rejection criteria, statistical validation,
+  benchmark comparison, and final decision categories
+  (ACCEPTED | REJECTED | INCONCLUSIVE | REQUIRES_MORE_DATA), mapped to Edge DB
+  verdicts. C002 is the first card written to the new schema (evidence in
+  §3).
+- C003–C010 cards retain the older fields and will be rewritten to the new
+  schema at their respective launches (non-blocking, N14).
 - C008/C009 cards are sparse (matrix/validation/benchmarks only via hypothesis
   reference). C011 has no registry card. Non-blocking (N1, N2).
 
@@ -107,7 +107,7 @@ Hypothesis (catalog H-ID)
 | Failed experiments preserved | PASS | 6 failed experiments retained with `failure_reason` (3 gap_strategy bring-up: import/broadcast/datetime; 3 gap_meta import) |
 | Campaign closure requires report + Edge DB entry | PASS | campaign policy; C001 report reachable (graph PRODUCES edge, C4/C14) |
 | Graph guarantees the chain | PASS WITH GAP | C9/C14 exist; **no check yet: "closed campaign → ≥1 Edge DB entry + catalog status update"** (recommend C17 at next graph iteration, N13) |
-| Hypothesis field convention | GAP | `experiment.hypothesis` currently holds pre-catalog descriptive text ("Overnight gaps in ES daily futures tend to continue…", 2 variants); C002 experiments must carry **H-MS-01** (**B2**) |
+| Hypothesis field convention | **B2 RESOLVED** | configs now require a canonical H-ID at load and at record creation (`is_canonical_hypothesis_id`); missing/free-text IDs raise `ValidationError`. All 39 historical C001 configs carry `H-C001` (the documented pre-catalog ID) — technically required for the validation; store records untouched (provenance preserved). C002 configs must carry `H-MS-01` (checklist Gate A) |
 
 ## 4. Reproducibility Readiness — PASS WITH CONDITIONS (72/100)
 
@@ -153,13 +153,13 @@ Missing metadata for long-term learning (all non-blocking, N8–N12):
 
 ---
 
-## 3. Blocking issues (must pass before C002 execution)
+## 3. Blocking issues — ALL RESOLVED (2026-08-06)
 
-| ID | Issue | Evidence | Fix (effort) |
+| ID | Issue | Fix applied | Evidence |
 |---|---|---|---|
-| **B1** | C002 card lacks explicit expected decision criteria (accept/reject rule) | campaigns.md C002 card: "expected entry E-00xx (rejected or accepted)" only | Codify on the card: accept iff DSR p<0.05 AND best cell beats C001 best cell on identical cost basis AND ≥1 benchmark (buy & hold or EMA(10,100)); otherwise reject. Any other rule stated in the report. (S) |
-| **B2** | `experiment.hypothesis` holds descriptive text, not canonical H-IDs | store probe: 2 pre-catalog variants; 0 H-IDs | C002 experiments record hypothesis = `H-MS-01` (ID convention; description optional in objective). (S) |
-| **B3** | Commit-before-run not enforced at origin (8/354 origin experiments dirty) | store probe: git_dirty True × 8 | Enforce clean-tree refusal in the runner at execution (platform maintenance release, outside this review's scope). C002 runs only on clean trees. (M, scheduled) |
+| **B1** | C002 card lacked explicit decision criteria | Campaign card template rewritten: research question, hypothesis, success criteria, rejection criteria, statistical validation, benchmark comparison, decision categories (**ACCEPTED / REJECTED / INCONCLUSIVE / REQUIRES_MORE_DATA**, mapped to Edge DB verdicts). C002 card is the first application. C001 untouched (historical) | `research/campaigns.md`; C002 card lists explicit accept/reject thresholds (DSR p<0.05 AND > C001 best cell AND ≥ 1 benchmark) |
+| **B2** | `experiment.hypothesis` held free text, not canonical IDs | `is_canonical_hypothesis_id` enforced in `ExperimentConfig.validate()` (config load) and `ExperimentRecord.validate_meta()` (record creation) — missing/non-canonical ID = `ValidationError`. 39 historical C001 configs updated to `H-C001` (documented pre-catalog ID); store records untouched. New tests added; example config uses `H-EXM-01` | `schema.py`, `config.py`; verification run: free-text hypothesis rejected, `H-C001`/`H-MS-01` accepted; 101/101 tests pass |
+| **B3** | Commit-before-run not enforced at origin | Runner records `quant_research_version` in every run env and marks every run on a dirty git tree **UNVERIFIABLE_REPRODUCTION** (experiment meta + run env, with commit + reason). Such runs may execute but cannot produce accepted scientific evidence. All reproducibility fields now verified: git state, commit hash, quant_research version, module checksum, config hash, seed | `_util.py` (env `quant_research_version=0.3.0`), `runner.py` (`_unverifiable_marker`); unit tests added; 101/101 tests pass. Platform change only — historical records untouched |
 
 ## 4. Non-blocking issues
 
@@ -168,7 +168,7 @@ Missing metadata for long-term learning (all non-blocking, N8–N12):
 | N1 | C008/C009 cards sparse (matrix/validation/benchmarks via hypothesis only) | before C008/C009 launch |
 | N2 | C011 in roadmap (rank 5) but no registry card | when it enters the ranked backlog |
 | N3 | Test parameters (n_permutations, iterations, CI) not persisted in run.tests | next platform release |
-| N4 | quant_research version not recorded in run env (frozen v0.3.0 declared in docs) | next platform release |
+| N4 | ~~quant_research version not recorded in run env~~ **RESOLVED** (env `quant_research_version`, B3) | — |
 | N5 | Raw CSVs (ES/CL/GC/EURUSD 10y) lack registered checksums (git-tracked; registered checksums cover the npz blobs — verified) | dataset registration wave (F5) |
 | N6 | CL/GC/EURUSD 10y registration pending (Grade B); DS-005 EURUSD weekend-bar preprocessing required before C007 | C003 (registration), C007 (preprocessing) |
 | N7 | Reproduction coverage 1.1% (3 matched / 7 attempts) — raise for headline/accepted results | every campaign closure, starting C002 |
@@ -178,18 +178,22 @@ Missing metadata for long-term learning (all non-blocking, N8–N12):
 | N11 | `gap_description` run-test has no asset id (descriptive, not statistical) | map or document at next asset review |
 | N12 | F-TREND (H-TF-01/02) and F-IMK-CORR (H-IMK-02) dangling (graph C6 fail) | before C003/C007: define F-TREND; F-IMK-CORR likely = F-CORR |
 | N13 | No graph check "closed campaign → ≥1 Edge DB entry + catalog status update" (future C17) | next graph iteration |
+| N14 | C003–C010 cards use the old field set; rewritten to the new schema at their launches | each campaign's launch |
 
 ## 5. Recommended fixes (priority order)
 
-1. **(B1)** Add "Expected decision criteria" to the campaign card template; fill C002. — S, before C002.
-2. **(B2)** Store convention: experiment hypothesis field = canonical H-ID for all new experiments. — S, before C002.
-3. **(B3)** Runner refuses dirty trees at execution (platform release). — M, scheduled.
+Applied 2026-08-06:
+1. ~~(B1) decision criteria on the campaign card template + C002 card~~ **DONE**
+2. ~~(B2) canonical H-ID required in experiment configs (config + record validation)~~ **DONE**
+3. ~~(B3) quant_research version per run + UNVERIFIABLE_REPRODUCTION marker on dirty-tree runs~~ **DONE**
+
+Remaining (all non-blocking):
 4. **(N12)** Resolve F-TREND definition + F-IMK-CORR naming (graph C6 → clean). — S, before C003/C007.
 5. **(N6/F5)** Register CL/GC/EURUSD 10y (mirror DS-001 pipeline, incl. raw-CSV checksums); document EURUSD weekend preprocessing. — M, before C003.
 6. **(N7)** Reproduce every C002 run at launch (full-sweep reproducibility pass). — S–M, with C002.
-7. **(N3/N4)** Persist test parameters + quant_research version in run records. — M, next platform release.
+7. **(N3)** Persist test parameters (n_permutations, iterations, CI) in run records. — M, next platform release.
 8. **(N8/N9)** Add markets field to hypothesis/campaign cards; log feature effects in meta_learning. — M, next card review.
-9. **(N1/N2)** Complete C008/C009 cards; add C011 card. — S, before those launches.
+9. **(N1/N2/N14)** Complete C008/C009 cards, add C011 card, rewrite C003–C010 cards to the new schema. — S, before those launches.
 10. **(N13)** Add graph check C17. — S, next graph iteration.
 
 ## 6. Verification method (this audit)

@@ -59,7 +59,7 @@ def run_sweep(tmp_path, store, source, name, sweep_values, seeds=(0, 1, 2),
               tags=None, assumptions=None):
     module = write_module(tmp_path, source, name)
     raw = {
-        "hypothesis": "h", "objective": "o", "author": "author-a",
+        "hypothesis": "H-TST-01", "objective": "o", "author": "author-a",
         "assumptions": assumptions if assumptions is not None else ["base-assumption"],
         "tags": tags or ["sweep-tag"],
         "experiment": {"module": module, "parameters": {"w": 0}},

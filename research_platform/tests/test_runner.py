@@ -11,6 +11,8 @@ import pytest
 from research_platform.config import load_config
 from research_platform.runner import (
     ExperimentContext,
+    UNVERIFIABLE_MARKER,
+    _unverifiable_marker,
     load_dataset_content,
     load_experiment_function,
     run_atomic,
@@ -64,7 +66,7 @@ def make_config(tmp_path, module, sweep=None, seeds=(0,), parameters=None,
     if dataset:
         exp["dataset"] = dataset
     raw = {
-        "hypothesis": "h", "objective": "o", "author": "a",
+        "hypothesis": "H-TST-01", "objective": "o", "author": "a",
         "assumptions": ["assumption-1"], "tags": ["tag-1"],
         "experiment": exp, "seeds": list(seeds),
     }
@@ -163,7 +165,7 @@ def test_sweep_and_repeats_materialize_siblings(tmp_path, store):
 def test_repeats_only_config(tmp_path, store):
     module = write_module(tmp_path, SIMPLE)
     raw = {
-        "hypothesis": "h", "objective": "o", "author": "a",
+        "hypothesis": "H-TST-01", "objective": "o", "author": "a",
         "experiment": {"module": module, "parameters": {}},
         "repeats": 3,
     }
@@ -266,6 +268,16 @@ def test_experiment_context_log():
     )
     ctx.log("one")
     assert ctx.log_lines == ["[experiment] one"]
+
+
+def test_unverifiable_marker_marks_dirty_git():
+    dirty = _unverifiable_marker({"commit": "abc123", "dirty": True})
+    assert dirty[UNVERIFIABLE_MARKER] is True
+    assert "abc123" in dirty["unverifiable_reproduction_reason"]
+    clean = _unverifiable_marker({"commit": "abc123", "dirty": False})
+    assert clean[UNVERIFIABLE_MARKER] is False
+    no_git = _unverifiable_marker(None)
+    assert no_git[UNVERIFIABLE_MARKER] is False
 
 
 def test_run_atomic_returns_record(tmp_path, store):

@@ -54,7 +54,7 @@ def write_module(tmp_path, source, name):
 def run_one(tmp_path, store, source, name="det_mod", cwd=None):
     module = write_module(tmp_path, source, name)
     raw = {
-        "hypothesis": "h", "objective": "o", "author": "a",
+        "hypothesis": "H-TST-01", "objective": "o", "author": "a",
         "experiment": {"module": module, "parameters": {}},
         "seeds": [0],
     }
@@ -132,7 +132,7 @@ def test_missing_dataset_is_unverifiable(tmp_path, store):
     )
     module = write_module(tmp_path, DETERMINISTIC, "det_ds")
     raw = {
-        "hypothesis": "h", "objective": "o", "author": "a",
+        "hypothesis": "H-TST-01", "objective": "o", "author": "a",
         "experiment": {"module": module, "parameters": {}, "dataset": "ds"},
         "seeds": [0],
     }

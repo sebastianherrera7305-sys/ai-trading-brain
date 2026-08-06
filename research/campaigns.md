@@ -7,14 +7,25 @@ report (publication-quality, per `README.md` §6).
 
 ## Campaign card template
 
+Every campaign card must explicitly define its research question, the
+hypothesis being tested, success and rejection criteria, the statistical
+validation and benchmark requirements, and the final decision categories.
+Decision categories: **ACCEPTED | REJECTED | INCONCLUSIVE | REQUIRES_MORE_DATA**
+(recorded as the Edge DB verdict at closure: accepted / rejected /
+inconclusive; REQUIRES_MORE_DATA is recorded as `inconclusive` with the
+missing data listed in `limitations` and the catalog status set accordingly).
+
 ```markdown
 ### C0XX — <Title>
 - **Status:** proposed | in-progress | completed | archived
-- **Objective:** (the question the campaign must answer)
-- **Hypotheses:** H-IDs from catalog.md
+- **Research question:** (the question the campaign must answer)
+- **Hypothesis:** H-IDs from catalog.md (canonical IDs only)
 - **Experiment matrix:** (grid: parameters × markets × seeds)
-- **Benchmarks:** (same-P&L basis)
-- **Validation:** (tests from the battery; DSR/RC if any grid is searched)
+- **Success criteria:** (conditions that must hold to decide ACCEPTED)
+- **Rejection criteria:** (conditions that must hold to decide REJECTED)
+- **Statistical validation:** (tests from the battery; DSR/RC if any grid is searched)
+- **Benchmark comparison:** (same-P&L basis; which benchmarks must be beaten)
+- **Decision:** (final decision categories: ACCEPTED | REJECTED | INCONCLUSIVE | REQUIRES_MORE_DATA)
 - **Robustness:** (cost ladder, per-year/regime, seed stability)
 - **Expected info value / cost:** H/M/L × S/M/L
 - **Report:** <path to report.md> (when completed)
@@ -37,20 +48,35 @@ report (publication-quality, per `README.md` §6).
 ## Prioritized backlog (ranked by expected information value per unit effort)
 
 ### C002 — Gap Fading (H-MS-01) — STATUS: ready, next
-- **Objective:** Does the *opposite* sign of the C001 rule carry the edge
-  (gaps fade instead of continue)?
-- **Hypotheses:** H-MS-01.
-- **Matrix:** 36 cells × 3 seeds @ 0 bps + 2.5/5 bps ladder; reuses C001 modules
-  (sign flip + same battery).
-- **Benchmarks:** buy & hold, EMA(10,100), random entries, **C001 best cell**
-  (directly comparable).
-- **Validation:** identical to C001; DSR/RC on the 36-cell grid; meta-compares
-  C001 vs C002 best cells (paired).
+- **Research question:** Does the *opposite* sign of the C001 rule carry the
+  edge (gaps fade instead of continue)?
+- **Hypothesis:** H-MS-01 (catalog; every experiment config carries this ID).
+- **Experiment matrix:** 36 cells × 3 seeds @ 0 bps + 2.5/5 bps ladder; reuses
+  C001 modules (sign flip + same battery).
+- **Success criteria (ACCEPTED):** DSR p < 0.05 after multiplicity correction
+  AND the best cell beats the C001 best cell (Sharpe 0.52) on identical cost
+  basis AND ≥ 1 benchmark (buy & hold 0.79 or EMA(10,100) 0.89) at 0 bps.
+- **Rejection criteria (REJECTED):** DSR p ≥ 0.05 OR best cell ≤ C001 best
+  cell OR all benchmark comparisons not significant (mirror of E-0001).
+- **Statistical validation:** identical battery to C001 — permutation gate vs
+  *signed* pool, Welch vs construction-matched pool, block bootstrap CI,
+  Bayesian win-rate, Wald SPRT; DSR/RC on the 36-cell grid; paired
+  C001-vs-C002 best-cell meta-comparison. All statistics via quant_research
+  v0.3.0 (version recorded per run).
+- **Benchmark comparison:** buy & hold, EMA(10,100), random entries (seed 0),
+  **C001 best cell** — all on the same P&L basis as the strategy (same daily
+  bars, window, and cost handling).
+- **Decision:** one of ACCEPTED | REJECTED | INCONCLUSIVE | REQUIRES_MORE_DATA
+  (expected: REJECTED → closes the gap family on ES daily; ACCEPTED →
+  first edge candidate; INCONCLUSIVE if the fade side has too few events /
+  SPRT undecided; REQUIRES_MORE_DATA if the fade event count is inadequate on
+  ES daily — then the follow-up is a multi-market C002 extension, recorded as
+  edge verdict `inconclusive` with the limitation listed).
 - **Robustness:** cost ladder, per-year, vol regime; seed stability.
 - **Expected value/cost:** High / S — the cheapest experiment with the highest
   incremental information: it converts C001's "no edge" into either "no gap
   edge at all" or "opposite-sign edge".
-- **Edge DB outcome:** expected entry E-00xx (rejected or accepted).
+- **Edge DB outcome:** E-00xx (verdict per decision criteria above).
 
 ### C003 — Trend Following Multi-Market (H-TF-01, H-TF-02) — STATUS: ready
 - **Objective:** Which markets respond to time-series momentum/breakout rules,

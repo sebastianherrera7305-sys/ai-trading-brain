@@ -1,5 +1,5 @@
 {
-  "hypothesis": "A momentum strategy's Sharpe ratio improves with longer lookback windows on this synthetic market.",
+  "hypothesis": "H-EXM-01",
   "objective": "Scan window sizes and estimate the momentum effect size across seeds.",
   "author": "research-platform-team",
   "assumptions": [

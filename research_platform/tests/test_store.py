@@ -137,7 +137,7 @@ def test_verify_missing_blob(tmp_path):
 
 def make_experiment(store, uuid="exp-1", params=None, seed=0, status="created"):
     return ExperimentRecord(
-        uuid=uuid, hypothesis="h", objective="o", author="a",
+        uuid=uuid, hypothesis="H-TST-01", objective="o", author="a",
         created_at="2024-01-01T00:00:00Z", dataset_id=None,
         params=params or {}, seed=seed, status=status,
         config_hash="cfg-1", module="m", function="run", module_checksum="",

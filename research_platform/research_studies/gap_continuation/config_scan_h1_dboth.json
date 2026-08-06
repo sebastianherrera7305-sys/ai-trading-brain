@@ -11,7 +11,7 @@
       "threshold_pct": 0.5
     }
   },
-  "hypothesis": "Overnight gaps in ES daily futures tend to continue (gap continuation): entering in the gap direction after a gap exceeding threshold_pct and holding for hold_days yields a positive edge after transaction costs.",
+  "hypothesis": "H-C001",
   "objective": "Scan threshold_pct in [0.3, 0.5, 0.7, 1.0] for hold_days=1, direction=both at zero cost (seed 0-2): the search set for the trial matrix.",
   "seeds": [
     0,

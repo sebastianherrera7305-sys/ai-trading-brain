@@ -7,6 +7,7 @@ fields, and nothing is silently stored in a partial state.
 """
 
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -19,6 +20,17 @@ from ._util import canonical_json, utcnow
 EXPERIMENT_STATUSES = ("created", "queued", "running", "completed", "failed", "aborted")
 RUN_STATUSES = ("running", "completed", "failed")
 REPRODUCTION_STATUSES = ("matched", "differed", "unverifiable")
+
+# Canonical hypothesis IDs follow the catalog convention: H-<DOMAIN>-<NN>,
+# e.g. H-MS-01, H-VWAP-02, plus the pre-catalog baseline H-C001. Every
+# experiment configuration must carry a canonical ID so the
+# hypothesis → campaign → experiment → run → result chain stays joinable.
+HYPOTHESIS_ID_RE = re.compile(r"^H-[A-Z]{1,6}-?\d{2,4}$")
+
+
+def is_canonical_hypothesis_id(value: str) -> bool:
+    """True when ``value`` is a canonical catalog hypothesis ID."""
+    return bool(HYPOTHESIS_ID_RE.fullmatch(str(value or "")))
 
 
 class ValidationError(ValueError):
@@ -178,6 +190,11 @@ class ExperimentRecord:
         ):
             if not str(value or "").strip():
                 raise ValidationError("%s must be a non-empty string" % name)
+        if not is_canonical_hypothesis_id(hypothesis):
+            raise ValidationError(
+                "hypothesis must be a canonical catalog ID "
+                "(pattern H-XXX-NN, e.g. 'H-MS-01'); got %r" % hypothesis
+            )
         if not isinstance(seed, int) or isinstance(seed, bool):
             raise ValidationError("seed must be an integer")
         if status not in EXPERIMENT_STATUSES:

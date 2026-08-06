@@ -198,7 +198,7 @@ def parse_campaigns(text):
             campaigns[current]["report"] = m.group(1) if m else None
         elif re.match(r"^-\s+\*\*Edge DB:\*\*", line):
             campaigns[current]["edges"] = _ids(line, r"E-\d+")
-        elif re.match(r"^-\s+\*\*Hypotheses:\*\*", line):
+        elif re.match(r"^-\s+\*\*Hypothes(i|e)s?:\*\*", line):
             campaigns[current]["hypotheses"] = _ids(line, r"H-[A-Z0-9-]+")
     return campaigns
 

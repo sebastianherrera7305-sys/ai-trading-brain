@@ -11,6 +11,8 @@ import json
 import os
 import platform
 import subprocess
+import sys
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -169,12 +171,36 @@ def env_snapshot(cwd: Optional[str] = None) -> Dict[str, Any]:
         snap["numpy_version"] = np.__version__
     except Exception:
         snap["numpy_version"] = "n/a"
+    snap["quant_research_version"] = _quant_research_version()
     git = git_state(cwd)
     if git is not None:
         snap["git"] = git
     else:
         snap["git"] = None
     return snap
+
+
+def _quant_research_version() -> str:
+    """Version of the frozen math engine used by experiments, or 'n/a'.
+
+    The engine lives at the repository root; the fallback import below
+    mirrors how study modules bootstrap it (see study `_common.py`).
+    """
+    try:
+        import quant_research
+
+        return getattr(quant_research, "__version__", "n/a")
+    except Exception:
+        pass
+    try:
+        root = str(Path(__file__).resolve().parents[2])
+        if root not in sys.path:
+            sys.path.insert(0, root)
+        import quant_research
+
+        return getattr(quant_research, "__version__", "n/a")
+    except Exception:
+        return "n/a"
 
 
 def float_eq(a: float, b: float, rtol: float = 1e-9, atol: float = 1e-12) -> bool:

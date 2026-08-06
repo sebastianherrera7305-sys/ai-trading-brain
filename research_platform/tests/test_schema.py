@@ -51,7 +51,7 @@ def test_params_forbid_seed():
 
 
 def test_experiment_validate_meta():
-    good = dict(hypothesis="h", objective="o", author="a", seed=0, status="queued")
+    good = dict(hypothesis="H-TST-01", objective="o", author="a", seed=0, status="queued")
     ExperimentRecord.validate_meta(**good)
     for field in ("hypothesis", "objective", "author"):
         bad = dict(good)
@@ -64,9 +64,17 @@ def test_experiment_validate_meta():
         ExperimentRecord.validate_meta(**{**good, "status": "nonsense"})
 
 
+def test_experiment_validate_meta_requires_canonical_hypothesis_id():
+    with pytest.raises(ValidationError, match="canonical catalog ID"):
+        ExperimentRecord.validate_meta(
+            hypothesis="Overnight gaps tend to continue", objective="o",
+            author="a", seed=0, status="queued",
+        )
+
+
 def test_experiment_summary():
     rec = ExperimentRecord(
-        uuid="u", hypothesis="h", objective="o", author="a",
+        uuid="u", hypothesis="H-TST-01", objective="o", author="a",
         created_at="t", dataset_id=None, params={}, seed=1,
         status="completed", config_hash="c", module="m", function="run",
         module_checksum="mc",

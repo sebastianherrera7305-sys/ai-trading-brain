@@ -1,17 +1,19 @@
 {
-  "hypothesis": "Overnight gaps in ES daily futures tend to continue (gap continuation), producing a positive edge after transaction costs.",
-  "objective": "Smoke test: verify gap_strategy executes end-to-end against the registered ES dataset and emits metrics/tests/artifacts.",
   "author": "sebastian",
   "experiment": {
-    "module": "gap_strategy",
-    "function": "run",
     "dataset": "es-f-10y-ohlc-v1",
+    "function": "run",
+    "module": "gap_strategy",
     "parameters": {
-      "threshold_pct": 0.5,
-      "hold_days": 1,
+      "cost_bps": 0.0,
       "direction": "both",
-      "cost_bps": 0.0
+      "hold_days": 1,
+      "threshold_pct": 0.5
     }
   },
-  "seeds": [0]
+  "hypothesis": "H-C001",
+  "objective": "Smoke test: verify gap_strategy executes end-to-end against the registered ES dataset and emits metrics/tests/artifacts.",
+  "seeds": [
+    0
+  ]
 }

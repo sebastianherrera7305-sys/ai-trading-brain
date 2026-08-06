@@ -15,7 +15,7 @@ def write_config(tmp_path, raw):
 
 
 BASE = {
-    "hypothesis": "h",
+    "hypothesis": "H-TST-01",
     "objective": "o",
     "author": "a",
     "experiment": {"module": "examples.experiments.momentum_scan", "parameters": {"x": 1}},
@@ -25,11 +25,16 @@ BASE = {
 
 def test_load_and_defaults(tmp_path):
     cfg = load_config(write_config(tmp_path, BASE))
-    assert cfg.hypothesis == "h"
+    assert cfg.hypothesis == "H-TST-01"
     assert cfg.function == "run"
     assert cfg.seeds == [0, 1]
     assert cfg.experiment_count == 2
     assert cfg.has_sweep is False
+
+
+def test_non_canonical_hypothesis_rejected():
+    with pytest.raises(ValidationError, match="canonical catalog ID"):
+        ExperimentConfig({**BASE, "hypothesis": "A momentum strategy beats the market"})
 
 
 def test_missing_file():
@@ -64,7 +69,7 @@ def test_seeds_and_repeats_exclusive(tmp_path):
 
 def test_repeats_expand_to_seeds():
     cfg = ExperimentConfig({
-        "hypothesis": "h", "objective": "o", "author": "a",
+        "hypothesis": "H-TST-01", "objective": "o", "author": "a",
         "experiment": {"module": "m", "parameters": {}},
         "repeats": 3,
     })

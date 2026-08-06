@@ -12,7 +12,7 @@ same experiments.
 Example config::
 
     {
-      "hypothesis": "z-score threshold 2.0 predicts next-day momentum",
+      "hypothesis": "H-EXM-01",
       "objective": "Measure the Sharpe of the signal across thresholds",
       "author": "sebastian",
       "assumptions": ["momentum persists", "returns iid"],
@@ -40,7 +40,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .schema import ValidationError
+from .schema import ValidationError, is_canonical_hypothesis_id
 from ._util import to_json_safe
 
 REQUIRED_TOP_LEVEL = ("hypothesis", "objective", "author", "experiment")
@@ -94,6 +94,11 @@ class ExperimentConfig:
         missing = [k for k in REQUIRED_TOP_LEVEL if not self.raw.get(k)]
         if missing:
             raise ValidationError("config missing required keys: %s" % ", ".join(missing))
+        if not is_canonical_hypothesis_id(self.hypothesis):
+            raise ValidationError(
+                "config 'hypothesis' must be a canonical catalog ID "
+                "(pattern H-XXX-NN, e.g. 'H-MS-01'); got %r" % self.hypothesis
+            )
         if not isinstance(self.raw.get("experiment"), dict):
             raise ValidationError("'experiment' must be an object")
         if not str(self.module).strip():

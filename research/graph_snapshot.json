@@ -25711,7 +25711,7 @@
       "type": "VALIDATED_IN"
     }
   ],
-  "generated_at": "2026-08-06 04:25 UTC",
+  "generated_at": "2026-08-06 04:59 UTC",
   "headline": {
     "best_benchmark_beats": 36,
     "best_benchmark_eliminator": "AS-BM-004",
@@ -30111,7 +30111,7 @@
       "question": "Graph health (nodes, edges, orphans, checks)"
     }
   },
-  "repo_commit": "c3f9196",
+  "repo_commit": "a86e0d1",
   "store": "/tmp/research-study",
   "unassigned_hypotheses": [
     "H-ALT-01",

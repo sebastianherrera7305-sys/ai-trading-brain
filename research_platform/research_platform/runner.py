@@ -66,6 +66,23 @@ class RunnerError(RuntimeError):
     pass
 
 
+# Runs executed on a dirty git tree cannot produce accepted scientific
+# evidence (governance B3): they may execute, but every such run is marked
+# UNVERIFIABLE_REPRODUCTION so no downstream verdict can rely on it.
+UNVERIFIABLE_MARKER = "unverifiable_reproduction"
+
+
+def _unverifiable_marker(git: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if git and git.get("dirty"):
+        return {
+            UNVERIFIABLE_MARKER: True,
+            "unverifiable_reproduction_reason": (
+                "git working tree dirty at execution (commit %s)" % git.get("commit")
+            ),
+        }
+    return {UNVERIFIABLE_MARKER: False}
+
+
 @dataclass
 class ExperimentContext:
     """Everything an atomic run is allowed to see."""
@@ -242,6 +259,7 @@ def run_atomic(
         git_repo=git["repo"] if git else None,
         git_dirty=git["dirty"] if git else None,
     )
+    rec.meta.update(_unverifiable_marker(git))
     store.create_experiment(rec)
     store.save_experiment_manifest(rec)
     return _execute(store, rec, cwd=cwd, quiet=quiet)
@@ -273,6 +291,7 @@ def _execute(
         env=env_snapshot(cwd),
         log_path=None,
     )
+    run.env.update(_unverifiable_marker(run.env.get("git")))
     ctx = ExperimentContext(
         params=rec.params,
         seed=rec.seed,
@@ -333,6 +352,7 @@ def _execute(
         log_path.write_text(log_text, encoding="utf-8")
         run.log_path = str(log_path)
         run.env = env_snapshot(cwd)
+        run.env.update(_unverifiable_marker(run.env.get("git")))
         write_json(str(run_dir / "env.json"), run.env)
         write_json(str(run_dir / "params.json"), rec.params)
         write_json(str(run_dir / "metrics.json"), run.metrics)

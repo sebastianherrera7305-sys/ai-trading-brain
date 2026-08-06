@@ -86,6 +86,11 @@ def test_env_snapshot_keys():
     assert "PYTHONHASHSEED" in snap["env"]
 
 
+def test_env_snapshot_records_quant_research_version():
+    snap = env_snapshot(os.getcwd())
+    assert snap["quant_research_version"] == "0.3.0"
+
+
 def test_float_eq():
     assert float_eq(1.0, 1.0 + 1e-13)
     assert not float_eq(1.0, 1.001)
